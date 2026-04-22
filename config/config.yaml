@@ -1,0 +1,67 @@
+# Quantitative Trading System Configuration
+
+data_sources:
+  yahoo:
+    enabled: true
+    rate_limit: 0.1
+    cache_enabled: true
+  alpha_vantage:
+    enabled: false
+    api_key: ""
+    rate_limit: 12
+
+database:
+  url: "sqlite:///data/market_data.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+backtesting:
+  initial_capital: 100000.0
+  commission: 0.001
+  slippage: 0.0001
+  default_symbols:
+    - AAPL
+    - MSFT
+    - GOOGL
+    - AMZN
+    - TSLA
+    - SPY
+    - QQQ
+
+risk_management:
+  max_position_size: 0.1
+  max_drawdown: 0.2
+  stop_loss: 0.05
+  take_profit: 0.1
+  max_leverage: 1.0
+
+trading:
+  default_timeframe: "1d"
+  allowed_timeframes:
+    - "1d"
+    - "1h"
+    - "4h"
+    - "1w"
+  session_start: "09:30"
+  session_end: "16:00"
+
+logging:
+  level: "INFO"
+  file: "logs/quant_trading.log"
+  max_size_mb: 10
+  backup_count: 5
+
+visualization:
+  theme: "dark"
+  save_format: "png"
+  dpi: 100
+  figure_size:
+    - 12
+    - 8
+
+performance:
+  use_cache: true
+  cache_expiry_days: 7
+  parallel_processing: false
+  max_workers: 4

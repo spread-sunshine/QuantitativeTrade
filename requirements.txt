@@ -1,0 +1,35 @@
+# Quant Trading System Dependencies
+# Install with: pip install -i https://mirrors.cloud.tencent.com/pypi/simple --trusted-host mirrors.cloud.tencent.com -r requirements.txt
+
+# Core dependencies
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Data fetching
+yfinance>=0.2.0  # Yahoo Finance API
+requests>=2.31.0
+
+# Database
+sqlalchemy>=2.0.0
+pandas-datareader>=0.10.0
+
+# Technical analysis
+ta>=0.10.0  # Technical Analysis Library
+
+# Backtesting
+backtesting>=0.3.0  # Backtesting framework
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Utilities
+python-dotenv>=1.0.0
+loguru>=0.7.0
+tqdm>=4.65.0
+
+# Testing
+pytest>=7.3.0
+pytest-cov>=4.0.0
