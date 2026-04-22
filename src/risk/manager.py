@@ -1,4 +1,4 @@
-"""Risk management core module."""
+"""风险管理核心模块。"""
 
 from typing import Dict, Any, Optional, List, Tuple
 import pandas as pd
@@ -14,7 +14,7 @@ logger = setup_logger(__name__)
 
 
 class RiskLevel(Enum):
-    """Risk tolerance levels."""
+    """风险承受水平。"""
     CONSERVATIVE = "conservative"
     MODERATE = "moderate"
     AGGRESSIVE = "aggressive"
@@ -22,28 +22,28 @@ class RiskLevel(Enum):
 
 @dataclass
 class RiskLimits:
-    """Risk limits configuration."""
-    # Position limits
-    max_position_size: float = 0.1  # Max 10% of portfolio in single position
-    max_sector_exposure: float = 0.3  # Max 30% of portfolio in single sector
-    max_leverage: float = 1.0  # Maximum leverage (1.0 = no leverage)
+    """风险限制配置。"""
+    # 持仓限制
+    max_position_size: float = 0.1  # 单只持仓最大占投资组合的10%
+    max_sector_exposure: float = 0.3  # 单一行业最大暴露30%
+    max_leverage: float = 1.0  # 最大杠杆（1.0表示无杠杆）
     
-    # Risk limits
-    max_drawdown_limit: float = 0.2  # Stop trading if drawdown exceeds 20%
-    daily_loss_limit: float = 0.05  # Stop trading if daily loss exceeds 5%
-    weekly_loss_limit: float = 0.1  # Stop trading if weekly loss exceeds 10%
+    # 风险限制
+    max_drawdown_limit: float = 0.2  # 如果回撤超过20%则停止交易
+    daily_loss_limit: float = 0.05  # 如果单日损失超过5%则停止交易
+    weekly_loss_limit: float = 0.1  # 如果单周损失超过10%则停止交易
     
-    # Concentration limits
-    max_concentration: float = 0.25  # Max 25% in top N positions
-    min_diversification: int = 5  # Minimum number of positions
+    # 集中度限制
+    max_concentration: float = 0.25  # 前N大持仓最大占25%
+    min_diversification: int = 5  # 最小持仓数量
     
-    # Liquidity limits
-    min_liquidity: float = 1000000.0  # Minimum daily trading volume
-    max_slippage: float = 0.001  # Maximum acceptable slippage
+    # 流动性限制
+    min_liquidity: float = 1000000.0  # 最小日交易量
+    max_slippage: float = 0.001  # 最大可接受滑点
     
     @classmethod
     def get_preset(cls, risk_level: RiskLevel) -> 'RiskLimits':
-        """Get risk limits preset based on risk level."""
+        """根据风险等级获取风险限制预设。"""
         if risk_level == RiskLevel.CONSERVATIVE:
             return cls(
                 max_position_size=0.05,
@@ -88,15 +88,15 @@ class RiskLimits:
 
 
 class RiskManager:
-    """Comprehensive risk management system.
+    """综合性风险管理系统。
     
-    Features:
-    - Position sizing and limits
-    - Drawdown control
-    - Loss limits (daily, weekly)
-    - Concentration risk
-    - Liquidity risk
-    - Margin and leverage control
+    功能特性：
+    - 仓位规模与限制
+    - 回撤控制
+    - 损失限制（日度、周度）
+    - 集中度风险
+    - 流动性风险
+    - 保证金与杠杆控制
     """
     
     def __init__(
@@ -105,12 +105,12 @@ class RiskManager:
         risk_level: RiskLevel = RiskLevel.MODERATE,
         custom_limits: Optional[Dict[str, float]] = None,
     ):
-        """Initialize risk manager.
+        """初始化风险管理器。
         
-        Args:
-            initial_capital: Initial portfolio capital.
-            risk_level: Risk tolerance level.
-            custom_limits: Custom risk limits overriding defaults.
+        参数：
+            initial_capital: 初始投资组合资金。
+            risk_level: 风险承受水平。
+            custom_limits: 自定义风险限制，覆盖默认值。
         """
         self.initial_capital = initial_capital
         self.current_capital = initial_capital
@@ -153,12 +153,12 @@ class RiskManager:
         current_prices: Dict[str, float],
         timestamp: datetime,
     ) -> None:
-        """Update portfolio state and calculate risk metrics.
+        """更新投资组合状态并计算风险指标。
         
-        Args:
-            positions: Current positions dictionary.
-            current_prices: Current market prices for positions.
-            timestamp: Current timestamp.
+        参数：
+            positions: 当前持仓字典。
+            current_prices: 持仓的当前市场价格。
+            timestamp: 当前时间戳。
         """
         self.positions = positions.copy()
         
@@ -187,17 +187,17 @@ class RiskManager:
         risk_per_trade: float = 0.02,
         max_position_pct: Optional[float] = None,
     ) -> Tuple[float, float]:
-        """Calculate optimal position size based on risk.
+        """基于风险计算最优仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            entry_price: Entry price.
-            stop_loss: Stop loss price.
-            risk_per_trade: Maximum risk per trade (0.02 = 2%).
-            max_position_pct: Maximum position size as percentage of portfolio.
+        参数：
+            symbol: 交易标的。
+            entry_price: 入场价格。
+            stop_loss: 止损价格。
+            risk_per_trade: 每笔交易最大风险（0.02 表示 2%）。
+            max_position_pct: 最大仓位占投资组合的百分比。
             
-        Returns:
-            Tuple of (position_size, position_value).
+        返回：
+            元组 (仓位规模, 仓位价值)。
         """
         # Use default max position size if not specified
         if max_position_pct is None:
@@ -244,17 +244,17 @@ class RiskManager:
         current_prices: Dict[str, float],
         timestamp: datetime,
     ) -> Tuple[bool, List[str]]:
-        """Check if a trade is allowed based on risk limits.
+        """根据风险限制检查是否允许交易。
         
-        Args:
-            symbol: Trading symbol.
-            position_size: Proposed position size.
-            position_value: Proposed position value.
-            current_prices: Current market prices.
-            timestamp: Trade timestamp.
+        参数：
+            symbol: 交易标的。
+            position_size: 拟建仓位规模。
+            position_value: 拟建仓位价值。
+            current_prices: 当前市场价格。
+            timestamp: 交易时间戳。
             
-        Returns:
-            Tuple of (is_allowed, violation_messages).
+        返回：
+            元组 (是否允许, 违规消息列表)。
         """
         violations = []
         
@@ -331,16 +331,16 @@ class RiskManager:
         commission: float = 0.0,
         slippage: float = 0.0,
     ) -> None:
-        """Record a completed trade.
+        """记录已完成的交易。
         
-        Args:
-            symbol: Trading symbol.
-            trade_type: 'BUY' or 'SELL'.
-            quantity: Trade quantity.
-            price: Trade price.
-            timestamp: Trade timestamp.
-            commission: Commission paid.
-            slippage: Slippage cost.
+        参数：
+            symbol: 交易标的。
+            trade_type: 'BUY' 或 'SELL'。
+            quantity: 交易数量。
+            price: 交易价格。
+            timestamp: 交易时间戳。
+            commission: 支付的佣金。
+            slippage: 滑点成本。
         """
         trade = {
             'timestamp': timestamp,
@@ -360,10 +360,10 @@ class RiskManager:
         )
     
     def suspend_trading(self, reason: str) -> None:
-        """Suspend all trading.
+        """暂停所有交易。
         
-        Args:
-            reason: Reason for suspension.
+        参数：
+            reason: 暂停原因。
         """
         self.is_trading_allowed = False
         self.risk_violations.append(f"Trading suspended: {reason}")
@@ -371,7 +371,7 @@ class RiskManager:
         logger.warning(f"Trading suspended: {reason}")
     
     def resume_trading(self) -> None:
-        """Resume trading if conditions allow."""
+        """如果条件允许，恢复交易。"""
         # Check if risk limits are still violated
         if self._check_risk_limits({}):
             self.is_trading_allowed = True
@@ -380,10 +380,10 @@ class RiskManager:
             logger.warning("Cannot resume trading: risk limits still violated")
     
     def get_risk_report(self) -> Dict[str, Any]:
-        """Generate comprehensive risk report.
+        """生成综合风险报告。
         
-        Returns:
-            Dictionary with risk metrics and violations.
+        返回：
+            包含风险指标和违规信息的字典。
         """
         report = {
             "portfolio": {
@@ -419,13 +419,13 @@ class RiskManager:
         return report
     
     def _calculate_portfolio_value(self, current_prices: Dict[str, float]) -> float:
-        """Calculate total portfolio value.
+        """计算投资组合总价值。
         
-        Args:
-            current_prices: Current market prices.
+        参数：
+            current_prices: 当前市场价格。
             
-        Returns:
-            Portfolio value.
+        返回：
+            投资组合价值。
         """
         total_value = 0.0
         
@@ -437,10 +437,10 @@ class RiskManager:
         return total_value
     
     def _update_drawdown(self, portfolio_value: float) -> None:
-        """Update drawdown metrics.
+        """更新回撤指标。
         
-        Args:
-            portfolio_value: Current portfolio value.
+        参数：
+            portfolio_value: 当前投资组合价值。
         """
         # Update peak value
         if portfolio_value > self.initial_capital:
@@ -457,11 +457,11 @@ class RiskManager:
             self.max_drawdown = self.current_drawdown
     
     def _update_daily_pnl(self, portfolio_value: float, timestamp: datetime) -> None:
-        """Update daily PNL tracking.
+        """更新每日盈亏跟踪。
         
-        Args:
-            portfolio_value: Current portfolio value.
-            timestamp: Current timestamp.
+        参数：
+            portfolio_value: 当前投资组合价值。
+            timestamp: 当前时间戳。
         """
         date_str = timestamp.strftime('%Y-%m-%d')
         
@@ -480,11 +480,11 @@ class RiskManager:
             self.daily_return = daily_pnl / self.current_capital
     
     def _update_weekly_pnl(self, portfolio_value: float, timestamp: datetime) -> None:
-        """Update weekly PNL tracking.
+        """更新每周盈亏跟踪。
         
-        Args:
-            portfolio_value: Current portfolio value.
-            timestamp: Current timestamp.
+        参数：
+            portfolio_value: 当前投资组合价值。
+            timestamp: 当前时间戳。
         """
         # Get week identifier (year-week)
         year, week, _ = timestamp.isocalendar()
@@ -505,13 +505,13 @@ class RiskManager:
             self.weekly_return = weekly_pnl / self.current_capital
     
     def _check_risk_limits(self, current_prices: Dict[str, float]) -> bool:
-        """Check all risk limits.
+        """检查所有风险限制。
         
-        Args:
-            current_prices: Current market prices.
+        参数：
+            current_prices: 当前市场价格。
             
-        Returns:
-            True if all limits are satisfied, False otherwise.
+        返回：
+            如果所有限制都满足则返回 True，否则返回 False。
         """
         self.risk_violations.clear()
         
@@ -566,14 +566,14 @@ class RiskManager:
         new_symbol: str,
         new_position_value: float,
     ) -> bool:
-        """Check if adding new position would exceed concentration limits.
+        """检查新增仓位是否超出集中度限制。
         
-        Args:
-            new_symbol: New symbol to add.
-            new_position_value: Value of new position.
+        参数：
+            new_symbol: 新增标的。
+            new_position_value: 新增仓位价值。
             
-        Returns:
-            True if concentration limit would be exceeded.
+        返回：
+            如果超出集中度限制则返回 True。
         """
         # Calculate total portfolio value with new position
         total_value = self.current_capital + new_position_value
@@ -600,13 +600,13 @@ class RiskManager:
         return False
     
     def _calculate_leverage(self, current_prices: Dict[str, float]) -> float:
-        """Calculate portfolio leverage.
+        """计算投资组合杠杆。
         
-        Args:
-            current_prices: Current market prices.
+        参数：
+            current_prices: 当前市场价格。
             
-        Returns:
-            Leverage ratio.
+        返回：
+            杠杆比率。
         """
         # Simplified calculation: total position value / equity
         total_position_value = 0.0

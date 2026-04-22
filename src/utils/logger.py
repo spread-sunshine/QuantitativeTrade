@@ -1,4 +1,4 @@
-# Logger setup utility
+# 日志记录器设置工具
 import logging
 import sys
 from typing import Optional
@@ -9,16 +9,16 @@ from config.settings import LOG_LEVEL, LOG_FILE, LOGS_DIR
 
 
 class InterceptHandler(logging.Handler):
-    """Intercept standard logging messages toward Loguru."""
+    """将标准日志消息拦截并重定向到Loguru。"""
 
     def emit(self, record):
-        # Get corresponding Loguru level if it exists
+        # 如果存在，获取对应的Loguru级别
         try:
             level = loguru_logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
 
-        # Find caller from where originated the logged message
+        # 查找日志消息来源的调用者
         frame, depth = logging.currentframe(), 2
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
@@ -30,19 +30,19 @@ class InterceptHandler(logging.Handler):
 
 
 def setup_logger(name: Optional[str] = None, level: str = LOG_LEVEL) -> loguru_logger:
-    """Setup logger with consistent configuration.
+    """使用一致的配置设置日志记录器。
 
     Args:
-        name: Logger name. If None, returns the root logger.
-        level: Logging level.
+        name: 日志记录器名称。如果为 None，则返回根日志记录器。
+        level: 日志级别。
 
     Returns:
-        Configured logger instance.
+        配置好的日志记录器实例。
     """
-    # Remove default handler
+    # 移除默认处理器
     loguru_logger.remove()
 
-    # Console handler
+    # 控制台处理器
     loguru_logger.add(
         sys.stdout,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
@@ -50,12 +50,12 @@ def setup_logger(name: Optional[str] = None, level: str = LOG_LEVEL) -> loguru_l
         colorize=True,
     )
 
-    # File handler
+    # 文件处理器
     log_file_path = Path(LOG_FILE)
     if not log_file_path.is_absolute():
         log_file_path = LOGS_DIR / log_file_path
 
-    # Ensure log directory exists
+    # 确保日志目录存在
     log_file_path.parent.mkdir(exist_ok=True)
 
     loguru_logger.add(
@@ -67,7 +67,7 @@ def setup_logger(name: Optional[str] = None, level: str = LOG_LEVEL) -> loguru_l
         compression="zip",
     )
 
-    # Intercept standard logging
+    # 拦截标准日志
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
     if name:
@@ -75,5 +75,5 @@ def setup_logger(name: Optional[str] = None, level: str = LOG_LEVEL) -> loguru_l
     return loguru_logger
 
 
-# Create default logger
+# 创建默认日志记录器
 logger = setup_logger()

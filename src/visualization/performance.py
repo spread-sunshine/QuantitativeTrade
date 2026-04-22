@@ -1,4 +1,4 @@
-# Performance analysis and comparison
+# 性能分析与比较
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
@@ -14,32 +14,32 @@ logger = setup_logger(__name__)
 
 
 def calculate_performance_metrics(returns: pd.Series, risk_free_rate: float = 0.02) -> Dict[str, float]:
-    """Calculate comprehensive performance metrics.
+    """计算综合性能指标。
 
-    Args:
-        returns: Strategy returns series.
-        risk_free_rate: Annual risk-free rate.
+    参数：
+        returns: 策略收益序列。
+        risk_free_rate: 年化无风险利率。
 
-    Returns:
-        Dictionary with performance metrics.
+    返回：
+        包含性能指标的字典。
     """
     if returns.empty or len(returns) < 2:
         return {}
     
     metrics = {}
     
-    # Basic returns metrics
+    # 基本收益指标
     metrics['total_return'] = (1 + returns).prod() - 1
     metrics['annualized_return'] = returns.mean() * 252
     metrics['annualized_volatility'] = returns.std() * np.sqrt(252)
     
-    # Risk-adjusted returns
+    # 风险调整后收益
     if metrics['annualized_volatility'] > 0:
         metrics['sharpe_ratio'] = (metrics['annualized_return'] - risk_free_rate) / metrics['annualized_volatility']
     else:
         metrics['sharpe_ratio'] = 0
     
-    # Sortino ratio (uses downside deviation)
+    # 索提诺比率（使用下行偏差）
     negative_returns = returns[returns < 0]
     if len(negative_returns) > 1:
         downside_std = negative_returns.std() * np.sqrt(252)
@@ -50,19 +50,19 @@ def calculate_performance_metrics(returns: pd.Series, risk_free_rate: float = 0.
     else:
         metrics['sortino_ratio'] = 0
     
-    # Maximum drawdown
+    # 最大回撤
     equity_curve = (1 + returns).cumprod()
     running_max = equity_curve.expanding().max()
     drawdown = (equity_curve - running_max) / running_max
     metrics['max_drawdown'] = drawdown.min()
     
-    # Calmar ratio
+    # 卡尔玛比率
     if metrics['max_drawdown'] < 0:
         metrics['calmar_ratio'] = metrics['annualized_return'] / abs(metrics['max_drawdown'])
     else:
         metrics['calmar_ratio'] = 0
     
-    # Win rate and profit factor
+    # 胜率和盈亏比
     positive_returns = returns[returns > 0]
     negative_returns = returns[returns < 0]
     
@@ -72,20 +72,20 @@ def calculate_performance_metrics(returns: pd.Series, risk_free_rate: float = 0.
         if negative_returns.sum() < 0 else np.inf
     )
     
-    # Average win/loss
+    # 平均盈利/亏损
     metrics['avg_win'] = positive_returns.mean() if len(positive_returns) > 0 else 0
     metrics['avg_loss'] = negative_returns.mean() if len(negative_returns) > 0 else 0
     metrics['win_loss_ratio'] = abs(metrics['avg_win'] / metrics['avg_loss']) if metrics['avg_loss'] < 0 else np.inf
     
-    # Skewness and kurtosis
+    # 偏度和峰度
     metrics['skewness'] = returns.skew()
     metrics['kurtosis'] = returns.kurtosis()
     
-    # Value at Risk (VaR) and Conditional VaR (CVaR)
+    # 风险价值（VaR）和条件风险价值（CVaR）
     metrics['var_95'] = np.percentile(returns, 5)
     metrics['cvar_95'] = returns[returns <= metrics['var_95']].mean()
     
-    # Best and worst periods
+    # 最佳和最差时期
     rolling_21 = returns.rolling(window=21).sum()  # Monthly
     rolling_252 = returns.rolling(window=252).sum()  # Annual
     
@@ -94,11 +94,11 @@ def calculate_performance_metrics(returns: pd.Series, risk_free_rate: float = 0.
     metrics['best_year'] = rolling_252.max() if not rolling_252.empty else 0
     metrics['worst_year'] = rolling_252.min() if not rolling_252.empty else 0
     
-    # Consistency metrics
+    # 一致性指标
     monthly_returns = returns.resample('M').sum()
     metrics['positive_month_rate'] = (monthly_returns > 0).mean() if not monthly_returns.empty else 0
     
-    # Recovery factor (simplified)
+    # 恢复因子（简化版）
     if metrics['max_drawdown'] < 0:
         # Estimate recovery time as time from max drawdown to new high
         drawdown_dates = drawdown[drawdown == metrics['max_drawdown']]
@@ -128,25 +128,25 @@ def compare_strategies(
     benchmark_returns: Optional[pd.Series] = None,
     risk_free_rate: float = 0.02,
 ) -> pd.DataFrame:
-    """Compare multiple strategies.
+    """比较多个策略。
 
-    Args:
-        strategy_results: Dictionary mapping strategy names to results dictionaries.
-        benchmark_returns: Benchmark returns series.
-        risk_free_rate: Annual risk-free rate.
+    参数：
+        strategy_results: 策略名称到结果字典的映射。
+        benchmark_returns: 基准收益序列。
+        risk_free_rate: 年化无风险利率。
 
-    Returns:
-        DataFrame with comparison metrics.
+    返回：
+        包含比较指标的DataFrame。
     """
     comparison_data = []
     
-    # Add benchmark if provided
+    # 如果提供了基准，则添加基准
     if benchmark_returns is not None:
         benchmark_metrics = calculate_performance_metrics(benchmark_returns, risk_free_rate)
         benchmark_metrics_with_name = {**benchmark_metrics, 'strategy_name': 'Benchmark'}
         comparison_data.append(benchmark_metrics_with_name)
     
-    # Calculate metrics for each strategy
+    # 为每个策略计算指标
     for strategy_name, results in strategy_results.items():
         returns = results.get('returns')
         if returns is None or returns.empty:
@@ -165,16 +165,16 @@ def compare_strategies(
         
         comparison_data.append(metrics_with_name)
     
-    # Create comparison DataFrame
+    # 创建比较DataFrame
     if not comparison_data:
         return pd.DataFrame()
     
     comparison_df = pd.DataFrame(comparison_data)
     
-    # Set strategy name as index
+    # 将策略名称设置为索引
     comparison_df.set_index('strategy_name', inplace=True)
     
-    # Sort by Sharpe ratio (descending)
+    # 按夏普比率降序排序
     if 'sharpe_ratio' in comparison_df.columns:
         comparison_df = comparison_df.sort_values('sharpe_ratio', ascending=False)
     
@@ -189,15 +189,15 @@ def plot_strategy_comparison(
     figsize: tuple = (14, 8),
     theme: str = "dark",
 ):
-    """Plot strategy comparison.
+    """绘制策略比较图。
 
-    Args:
-        comparison_df: DataFrame with strategy comparison metrics.
-        metrics: List of metrics to plot. If None, uses default metrics.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        comparison_df: 包含策略比较指标的DataFrame。
+        metrics: 要绘制的指标列表。如果为None，则使用默认指标。
+        title: 图表标题。
+        save_path: 保存图片的路径。
+        figsize: 图表尺寸。
+        theme: 绘图主题。
     """
     if comparison_df.empty:
         logger.warning("No data for strategy comparison")
@@ -216,14 +216,14 @@ def plot_strategy_comparison(
             'profit_factor',
         ]
     
-    # Filter available metrics
+    # 过滤可用的指标
     available_metrics = [m for m in metrics if m in comparison_df.columns]
     
     if not available_metrics:
         logger.warning("No available metrics to plot")
         return
     
-    # Create subplots
+    # 创建子图
     n_metrics = len(available_metrics)
     n_cols = min(3, n_metrics)
     n_rows = (n_metrics + n_cols - 1) // n_cols
@@ -237,13 +237,13 @@ def plot_strategy_comparison(
         
         ax = axes[idx]
         
-        # Create bar plot
+        # 创建条形图
         bars = ax.bar(range(len(comparison_df)), comparison_df[metric].values)
         ax.set_title(metric.replace('_', ' ').title(), fontsize=12)
         ax.set_xticks(range(len(comparison_df)))
         ax.set_xticklabels(comparison_df.index, rotation=45, ha='right', fontsize=9)
         
-        # Color bars based on metric value (green for good, red for bad)
+        # 根据指标值为条形着色（绿色表示好，红色表示差）
         for i, bar in enumerate(bars):
             value = comparison_df[metric].iloc[i]
             
@@ -262,7 +262,7 @@ def plot_strategy_comparison(
             bar.set_color(color)
             bar.set_edgecolor('white')
         
-        # Add value labels on top of bars
+        # 在条形顶部添加数值标签
         for i, bar in enumerate(bars):
             value = comparison_df[metric].iloc[i]
             
@@ -284,7 +284,7 @@ def plot_strategy_comparison(
             ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
                    label, ha='center', va='bottom', fontsize=8)
     
-    # Hide unused subplots
+    # 隐藏未使用的子图
     for idx in range(len(available_metrics), len(axes)):
         axes[idx].set_visible(False)
     
@@ -305,14 +305,14 @@ def plot_correlation_heatmap(
     figsize: tuple = (10, 8),
     theme: str = "dark",
 ):
-    """Plot correlation heatmap of strategy returns.
+    """绘制策略收益相关性热图。
 
-    Args:
-        strategy_returns: Dictionary mapping strategy names to returns series.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        strategy_returns: 策略名称到收益序列的映射字典。
+        title: 图表标题。
+        save_path: 保存图片的路径。
+        figsize: 图表尺寸。
+        theme: 绘图主题。
     """
     if not strategy_returns:
         logger.warning("No strategy returns for correlation heatmap")
@@ -320,7 +320,7 @@ def plot_correlation_heatmap(
     
     set_plot_style(theme)
     
-    # Align returns series
+    # 对齐收益序列
     returns_list = []
     strategy_names = []
     
@@ -333,21 +333,21 @@ def plot_correlation_heatmap(
         logger.warning("Need at least 2 strategies for correlation heatmap")
         return
     
-    # Create DataFrame with aligned returns
+    # 使用对齐的收益创建DataFrame
     returns_df = pd.concat(returns_list, axis=1)
     returns_df.columns = strategy_names
     returns_df = returns_df.dropna()
     
-    # Calculate correlation matrix
+    # 计算相关性矩阵
     corr_matrix = returns_df.corr()
     
-    # Create heatmap
+    # 创建热图
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Create mask for upper triangle
+    # 创建上三角掩码
     mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
     
-    # Plot heatmap
+    # 绘制热图
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     sns.heatmap(corr_matrix, mask=mask, cmap=cmap, center=0,
                 square=True, linewidths=.5, cbar_kws={"shrink": .8},
@@ -371,15 +371,15 @@ def plot_returns_scatter(
     figsize: tuple = (12, 8),
     theme: str = "dark",
 ):
-    """Plot scatter plot of strategy returns vs benchmark.
+    """绘制策略收益与基准收益的散点图。
 
-    Args:
-        strategy_returns: Dictionary mapping strategy names to returns series.
-        benchmark_returns: Benchmark returns series.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        strategy_returns: 策略名称到收益序列的映射字典。
+        benchmark_returns: 基准收益序列。
+        title: 图表标题。
+        save_path: 保存图片的路径。
+        figsize: 图表尺寸。
+        theme: 绘图主题。
     """
     if not strategy_returns:
         logger.warning("No strategy returns for scatter plot")
@@ -393,7 +393,7 @@ def plot_returns_scatter(
     
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Align benchmark returns with strategy returns
+    # 将基准收益与策略收益对齐
     benchmark_aligned = benchmark_returns.copy()
     
     colors = plt.cm.Set1(np.linspace(0, 1, len(strategy_returns)))
@@ -410,16 +410,16 @@ def plot_returns_scatter(
         strategy_returns_aligned = aligned_data.iloc[:, 0]
         benchmark_returns_aligned = aligned_data.iloc[:, 1]
         
-        # Calculate alpha and beta
+        # 计算alpha和beta
         cov = np.cov(strategy_returns_aligned, benchmark_returns_aligned)
         beta = cov[0, 1] / cov[1, 1] if cov[1, 1] != 0 else 0
         alpha = strategy_returns_aligned.mean() - beta * benchmark_returns_aligned.mean()
         
-        # Plot scatter
+        # 绘制散点图
         ax.scatter(benchmark_returns_aligned * 100, strategy_returns_aligned * 100,
                   alpha=0.6, s=50, color=color, label=f'{strategy_name} (β={beta:.2f})')
     
-    # Add regression line
+    # 添加回归线
     if len(strategy_returns) == 1:
         # For single strategy, plot regression line
         for strategy_name, returns in strategy_returns.items():
@@ -442,10 +442,10 @@ def plot_returns_scatter(
             y_line = poly(x_line)
             ax.plot(x_line, y_line, '--', color='red', alpha=0.7, linewidth=2)
     
-    # Add diagonal line (y = x)
+    # 添加对角线（y = x）
     ax.axline((0, 0), slope=1, color='gray', linestyle='--', alpha=0.5, label='Benchmark Line')
     
-    # Add zero lines
+    # 添加零线
     ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3, linewidth=0.5)
     ax.axvline(x=0, color='gray', linestyle='-', alpha=0.3, linewidth=0.5)
     
@@ -472,15 +472,15 @@ def create_performance_attribution(
     figsize: tuple = (12, 6),
     theme: str = "dark",
 ):
-    """Create performance attribution plot.
+    """创建绩效归因图。
 
-    Args:
-        strategy_returns: Strategy returns series.
-        factor_returns: Dictionary mapping factor names to returns series.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        strategy_returns: 策略收益序列。
+        factor_returns: 因子名称到收益序列的映射字典。
+        title: 图表标题。
+        save_path: 保存图片的路径。
+        figsize: 图表尺寸。
+        theme: 绘图主题。
     """
     if strategy_returns.empty:
         logger.warning("No strategy returns for performance attribution")
@@ -492,7 +492,7 @@ def create_performance_attribution(
     
     set_plot_style(theme)
     
-    # Align all returns series
+    # 对齐所有收益序列
     all_returns = [strategy_returns] + list(factor_returns.values())
     all_names = ['Strategy'] + list(factor_returns.keys())
     
@@ -503,13 +503,13 @@ def create_performance_attribution(
         logger.warning("No overlapping data for performance attribution")
         return
     
-    # Calculate cumulative returns
+    # 计算累计收益
     cumulative_returns = (1 + aligned_returns).cumprod() - 1
     
-    # Create plot
+    # 创建图表
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Plot cumulative returns
+    # 绘制累计收益
     for column in cumulative_returns.columns:
         ax.plot(cumulative_returns.index, cumulative_returns[column] * 100,
                 label=column, linewidth=2)
@@ -520,7 +520,7 @@ def create_performance_attribution(
     ax.legend(loc='upper left', fontsize=10)
     ax.grid(True, alpha=0.3)
     
-    # Format x-axis dates
+    # 格式化x轴日期
     ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%Y-%m'))
     ax.xaxis.set_major_locator(plt.matplotlib.dates.MonthLocator(interval=3))
     fig.autofmt_xdate()

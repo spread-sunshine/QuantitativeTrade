@@ -1,4 +1,4 @@
-# Base strategy class for trading strategies
+# 交易策略基类
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, List, Union, Tuple, TypeAlias
 import pandas as pd
@@ -7,7 +7,7 @@ import logging
 
 from ..utils.logger import setup_logger
 
-# Type aliases for better readability
+# 类型别名，提高可读性
 Series: TypeAlias = pd.Series
 DataFrame: TypeAlias = pd.DataFrame
 Timestamp: TypeAlias = pd.Timestamp
@@ -18,7 +18,7 @@ logger = setup_logger(__name__)
 
 
 class BaseStrategy(ABC):
-    """Base class for all trading strategies."""
+    """所有交易策略的基类。"""
 
     def __init__(
         self,
@@ -27,26 +27,26 @@ class BaseStrategy(ABC):
         commission: float = 0.001,
         slippage: float = 0.0001,
     ):
-        """Initialize strategy.
+        """初始化策略。
 
         Args:
-            name: Strategy name.
-            initial_capital: Initial capital for backtesting.
-            commission: Commission rate per trade.
-            slippage: Slippage as fraction of price.
+            name: 策略名称。
+            initial_capital: 回测初始资金。
+            commission: 每笔交易佣金率。
+            slippage: 价格滑点比例。
         """
         self.name = name
         self.initial_capital = initial_capital
         self.commission = commission
         self.slippage = slippage
         
-        # State variables
-        self.position: int = 0  # Current position (+1 long, -1 short, 0 flat)
+        # 状态变量
+        self.position: int = 0  # 当前持仓 (+1 多头, -1 空头, 0 空仓)
         self.capital: float = initial_capital
         self.equity: float = initial_capital
-        self.trades: List[Dict[str, Any]] = []  # List of trade records
+        self.trades: List[Dict[str, Any]] = []  # 交易记录列表
         
-        # Performance metrics
+        # 性能指标
         self.returns: List[float] = []  # Daily returns
         self.drawdown: float = 0.0  # Current drawdown
         self.max_drawdown: float = 0.0  # Maximum drawdown
@@ -54,105 +54,102 @@ class BaseStrategy(ABC):
         self.sortino_ratio: float = 0.0  # Sortino ratio
         self.win_rate: float = 0.0  # Win rate
         
-        # Data
-        self.data: Optional[DataFrame] = None  # Historical market data
-        self.signals: Optional[DataFrame] = None  # Generated trading signals
+        # 数据
+        self.data: Optional[DataFrame] = None  # 历史市场数据
+        self.signals: Optional[DataFrame] = None  # 生成的交易信号
 
     @abstractmethod
     def generate_signals(self, data: DataFrame) -> DataFrame:
-        """Generate trading signals from market data.
+        """从市场数据生成交易信号。
 
-        Subclasses must implement this method to generate trading signals
-        based on their specific logic. The method should return a DataFrame
-        containing at least a 'signal' column with values:
-        - 1: Buy/Long signal
-        - -1: Sell/Short signal
-        - 0: Hold/No position signal
+        子类必须实现此方法，根据其特定逻辑生成交易信号。
+        该方法应返回至少包含'signal'列的DataFrame，其值为：
+        - 1: 买入/多头信号
+        - -1: 卖出/空头信号
+        - 0: 持有/空仓信号
 
         Args:
-            data: DataFrame with historical market data containing at least
-                OHLCV columns ('open', 'high', 'low', 'close', 'volume').
+            data: 包含至少OHLCV列（'open', 'high', 'low', 'close', 'volume'）的历史市场数据DataFrame。
 
         Returns:
-            DataFrame with the same index as input data, containing:
-            - 'signal': Trading signals (1, -1, or 0)
-            - Additional columns as needed (e.g., 'strength', 'reason')
+            与输入数据相同索引的DataFrame，包含：
+            - 'signal': 交易信号（1, -1, 或 0）
+            - 其他所需列（例如 'strength', 'reason'）
 
         Raises:
-            ValueError: If input data is missing required columns or is empty.
+            ValueError: 如果输入数据缺少必需列或为空。
         """
         pass
 
     def calculate_returns(self, prices: Series, signals: Series) -> Series:
-        """Calculate strategy returns based on signals and prices.
+        """基于信号和价格计算策略收益。
 
-        This method calculates daily returns for the strategy, adjusting for
-        transaction costs (commission) and market impact (slippage).
-        Signals are shifted by one period to avoid look-ahead bias.
+        此方法计算策略的日收益，调整交易成本（佣金）和市场影响（滑点）。
+        信号向后移动一个周期以避免前瞻性偏差。
 
         Args:
-            prices: Price series (e.g., close prices).
-            signals: Trading signals series (1 for long, -1 for short, 0 for flat).
+            prices: 价格序列（例如收盘价）。
+            signals: 交易信号序列（1表示多头，-1表示空头，0表示空仓）。
 
         Returns:
-            Series containing daily strategy returns (including costs).
+            包含日策略收益（含成本）的序列。
 
         Raises:
-            ValueError: If prices and signals have different lengths.
-            ValueError: If signals contain values other than -1, 0, or 1.
+            ValueError: 如果价格和信号长度不同。
+            ValueError: 如果信号包含除-1、0、1以外的值。
         """
         if len(prices) != len(signals):
             raise ValueError(f"Prices ({len(prices)}) and signals ({len(signals)}) must have same length")
         
-        # Validate signal values
+        # 验证信号值
         unique_signals = signals.unique()
         invalid_signals = set(unique_signals) - {-1, 0, 1}
         if invalid_signals:
             raise ValueError(f"Signals must be -1, 0, or 1. Found invalid values: {invalid_signals}")
         
-        # Shift signals to avoid look-ahead bias (trade at next period's open)
+        # 信号向后移动以避免前瞻性偏差（在下一周期开盘交易）
         signals_shifted = signals.shift(1)
         
-        # Calculate price returns
+        # 计算价格收益
         price_returns = prices.pct_change()
         
-        # Calculate raw strategy returns (signal * price return)
+        # 计算原始策略收益（信号 * 价格收益）
         strategy_returns = signals_shifted * price_returns
         
-        # Adjust for commission (pay commission on entry and exit)
+        # 调整佣金（进出场支付佣金）
         trade_changes = signals_shifted.diff().fillna(0).abs()
         strategy_returns = strategy_returns - (trade_changes * self.commission)
         
-        # Adjust for slippage (cost proportional to position size)
+        # 调整滑点（成本与头寸规模成比例）
         strategy_returns = strategy_returns - (abs(signals_shifted) * self.slippage)
         
         return strategy_returns
 
     def calculate_equity_curve(self, returns: Series) -> Series:
-        """Calculate equity curve from returns.
+        """从收益计算权益曲线。
 
         Args:
-            returns: Strategy returns series (daily returns).
+            returns: 策略收益序列（日收益）。
 
         Returns:
-            Equity curve series (cumulative product of returns).
+            权益曲线序列（收益的累积乘积）。
         """
         equity_curve = (1 + returns).cumprod() * self.initial_capital
         return equity_curve
 
     def calculate_drawdown(self, equity_curve: Series) -> Series:
-        """Calculate drawdown series from equity curve.
+        """从权益曲线计算回撤序列。
 
         Args:
-            equity_curve: Equity curve series.
+            equity_curve: 权益曲线序列。
 
         Returns:
-            Drawdown series (negative values representing drawdowns).
+            回撤序列（负值表示回撤）。
         """
-        # Calculate running maximum
+        # 计算运行最大值
         running_max = equity_curve.expanding().max()
         
-        # Calculate drawdown
+        # 计算回撤
         drawdown = (equity_curve - running_max) / running_max
         
         return drawdown
@@ -160,20 +157,20 @@ class BaseStrategy(ABC):
     def calculate_sharpe_ratio(
         self, returns: Series, risk_free_rate: float = 0.02
     ) -> float:
-        """Calculate Sharpe ratio (risk-adjusted return).
+        """计算夏普比率（风险调整后收益）。
 
         Args:
-            returns: Strategy returns series (daily returns).
-            risk_free_rate: Annual risk-free rate (default 0.02 = 2%).
+            returns: 策略收益序列（日收益）。
+            risk_free_rate: 年化无风险利率（默认0.02 = 2%）。
 
         Returns:
-            Sharpe ratio (annualized). Returns 0.0 for insufficient data.
+            夏普比率（年化）。数据不足时返回0.0。
         """
         if len(returns) < 2:
             return 0.0
         
-        # Annualize returns and standard deviation
-        # Assuming daily returns (252 trading days)
+        # 年化收益和标准差
+        # 假设日收益（252个交易日）
         annualized_return = returns.mean() * 252
         annualized_vol = returns.std() * np.sqrt(252)
         
@@ -186,25 +183,25 @@ class BaseStrategy(ABC):
     def calculate_sortino_ratio(
         self, returns: Series, risk_free_rate: float = 0.02
     ) -> float:
-        """Calculate Sortino ratio (downside risk-adjusted return).
+        """计算索提诺比率（下行风险调整后收益）。
 
         Args:
-            returns: Strategy returns series (daily returns).
-            risk_free_rate: Annual risk-free rate (default 0.02 = 2%).
+            returns: 策略收益序列（日收益）。
+            risk_free_rate: 年化无风险利率（默认0.02 = 2%）。
 
         Returns:
-            Sortino ratio (annualized). Returns 0.0 for insufficient data.
+            索提诺比率（年化）。数据不足时返回0.0。
         """
         if len(returns) < 2:
             return 0.0
         
-        # Separate negative returns
+        # 分离负收益
         negative_returns = returns[returns < 0]
         
         if len(negative_returns) < 2:
             return 0.0
         
-        # Annualize returns and downside deviation
+        # 年化收益和下行偏差
         annualized_return = returns.mean() * 252
         downside_vol = negative_returns.std() * np.sqrt(252)
         
@@ -215,18 +212,18 @@ class BaseStrategy(ABC):
         return sortino
 
     def calculate_win_rate(self, returns: Series) -> float:
-        """Calculate win rate (percentage of profitable periods).
+        """计算胜率（盈利周期百分比）。
 
         Args:
-            returns: Strategy returns series (daily returns).
+            returns: 策略收益序列（日收益）。
 
         Returns:
-            Win rate between 0.0 and 1.0. Returns 0.0 for insufficient data.
+            胜率介于0.0和1.0之间。数据不足时返回0.0。
         """
         if len(returns) < 2:
             return 0.0
         
-        # Count positive returns (assuming each period is a "trade")
+        # 计算正收益数量（假设每个周期为一次\"交易\"）
         positive_trades = (returns > 0).sum()
         total_trades = len(returns)
         
@@ -237,14 +234,14 @@ class BaseStrategy(ABC):
         return win_rate
 
     def calculate_max_drawdown(self, drawdown: Series) -> float:
-        """Calculate maximum drawdown from drawdown series.
+        """从回撤序列计算最大回撤。
 
         Args:
-            drawdown: Drawdown series (negative values).
+            drawdown: 回撤序列（负值）。
 
         Returns:
-            Maximum drawdown (most negative value, e.g., -0.15 for 15% drawdown).
-            Returns 0.0 for empty series.
+            最大回撤（最负值，例如-0.15表示15%回撤）。
+            空序列时返回0.0。
         """
         if len(drawdown) == 0:
             return 0.0
@@ -253,33 +250,33 @@ class BaseStrategy(ABC):
         return max_dd
 
     def run_backtest(self, data: DataFrame) -> BacktestResult:
-        """Run backtest on historical data.
+        """在历史数据上运行回测。
 
-        Executes a complete backtest by:
-        1. Generating trading signals from the data
-        2. Calculating strategy returns (adjusted for costs)
-        3. Computing performance metrics (Sharpe, Sortino, drawdown, etc.)
-        4. Compiling results into a structured dictionary
+        通过以下步骤执行完整回测：
+        1. 从数据生成交易信号
+        2. 计算策略收益（调整成本后）
+        3. 计算性能指标（夏普、索提诺、回撤等）
+        4. 将结果编译为结构化字典
 
         Args:
-            data: Historical market data DataFrame with OHLCV columns.
+            data: 包含OHLCV列的历史市场数据DataFrame。
 
         Returns:
-            Dictionary containing comprehensive backtest results.
+            包含全面回测结果的字典。
 
         Raises:
-            ValueError: If data is missing required 'close' column.
-            RuntimeError: If signal generation fails.
+            ValueError: 如果数据缺少必需的'close'列。
+            RuntimeError: 如果信号生成失败。
         """
         logger.info(f"Running backtest for {self.name}")
         
-        # Store data
+        # 存储数据
         self.data = data.copy()
         
-        # Generate signals
+        # 生成信号
         self.signals = self.generate_signals(data)
         
-        # Calculate returns
+        # 计算收益
         if 'close' not in data.columns:
             raise ValueError("Data must contain 'close' column")
         
@@ -288,7 +285,7 @@ class BaseStrategy(ABC):
         # Calculate equity curve
         equity_curve = self.calculate_equity_curve(returns)
         
-        # Calculate drawdown
+        # 计算回撤
         drawdown = self.calculate_drawdown(equity_curve)
         
         # Calculate performance metrics
@@ -380,7 +377,7 @@ class BaseStrategy(ABC):
 
 
 class Signal:
-    """Represents a trading signal with timestamp, symbol, and metadata."""
+    """表示带有时间戳、符号和元数据的交易信号。"""
     
     def __init__(
         self,
@@ -391,15 +388,15 @@ class Signal:
         quantity: Optional[float] = None,
         reason: Optional[str] = None,
     ) -> None:
-        """Initialize signal with all relevant information.
+        """使用所有相关信息初始化信号。
         
         Args:
-            timestamp: Signal timestamp (datetime when signal was generated).
-            symbol: Trading symbol (e.g., 'AAPL', 'SPY').
-            signal_type: Signal type ('long', 'short', 'exit').
-            price: Entry/exit price at signal time.
-            quantity: Position size (positive for long, negative for short).
-            reason: Human-readable reason for the signal (optional).
+            timestamp: 信号时间戳（信号生成的日期时间）。
+            symbol: 交易符号（例如 'AAPL', 'SPY'）。
+            signal_type: 信号类型（'long', 'short', 'exit'）。
+            price: 信号时的入场/出场价格。
+            quantity: 头寸规模（正数为多头，负数为空头）。
+            reason: 信号的人类可读原因（可选）。
         """
         self.timestamp = timestamp
         self.symbol = symbol
@@ -409,10 +406,10 @@ class Signal:
         self.reason = reason
         
     def to_dict(self) -> SignalDict:
-        """Convert signal to serializable dictionary.
+        """将信号转换为可序列化字典。
         
         Returns:
-            Dictionary representation suitable for JSON serialization.
+            适合JSON序列化的字典表示。
         """
         return {
             "timestamp": self.timestamp,

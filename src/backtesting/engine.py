@@ -1,4 +1,4 @@
-"""Backtesting engine for quantitative trading strategies."""
+"""量化交易策略的回测引擎。"""
 
 from typing import Dict, Any, List, Optional, Union
 import pandas as pd
@@ -18,15 +18,15 @@ logger = setup_logger(__name__)
 
 
 class BacktestEngine:
-    """Main backtesting engine for running trading strategies on historical data.
+    """在历史数据上运行交易策略的主回测引擎。
     
-    Features:
-    - Single strategy backtesting
-    - Multiple strategies comparison
-    - Walk-forward analysis
-    - Parameter optimization (grid search)
-    - Monte Carlo simulation
-    - Parallel processing support
+    特性：
+    - 单策略回测
+    - 多策略比较
+    - 向前滚动分析
+    - 参数优化（网格搜索）
+    - 蒙特卡洛模拟
+    - 并行处理支持
     """
     
     def __init__(
@@ -38,15 +38,15 @@ class BacktestEngine:
         benchmark: Optional[str] = None,
         risk_free_rate: float = 0.02,
     ):
-        """Initialize backtesting engine.
+        """初始化回测引擎。
         
         Args:
-            data: Historical market data (must contain 'close' column).
-            initial_capital: Initial capital for backtesting.
-            commission: Commission rate per trade (0.001 = 0.1%).
-            slippage: Slippage as fraction of price.
-            benchmark: Benchmark symbol for comparison (optional).
-            risk_free_rate: Annual risk-free rate for Sharpe ratio calculation.
+            data: 历史市场数据（必须包含'close'列）。
+            initial_capital: 回测初始资金。
+            commission: 每笔交易佣金率（0.001 = 0.1%）。
+            slippage: 价格滑点比例。
+            benchmark: 用于比较的基准符号（可选）。
+            risk_free_rate: 夏普比率计算的年化无风险利率。
         """
         self.data = data.copy()
         self.initial_capital = initial_capital
@@ -96,17 +96,17 @@ class BacktestEngine:
         name: Optional[str] = None,
         **strategy_params,
     ) -> BacktestResults:
-        """Run backtest for a single strategy.
+        """运行单个策略的回测。
         
         Args:
-            strategy: Strategy instance (subclass of BaseStrategy).
-            name: Optional name for the backtest (default: strategy.name).
-            **strategy_params: Additional parameters to pass to strategy.
+            strategy: 策略实例（BaseStrategy的子类）。
+            name: 回测的可选名称（默认：strategy.name）。
+            **strategy_params: 传递给策略的额外参数。
             
         Returns:
-            BacktestResults object containing all backtest results.
+            包含所有回测结果的BacktestResults对象。
         """
-        # Update strategy parameters if provided
+        # 如果提供了策略参数，则更新
         if strategy_params:
             strategy.set_parameters(**strategy_params)
         
@@ -199,7 +199,7 @@ class BacktestEngine:
                     for strategy, name in zip(strategies, names)
                 }
                 
-                # Process results as they complete
+                # 处理完成的结果
                 for future in tqdm(
                     as_completed(future_to_name),
                     total=len(strategies),
@@ -213,7 +213,7 @@ class BacktestEngine:
                         logger.error(f"Error running strategy {name}: {e}")
                         raise
         else:
-            # Run strategies sequentially
+            # 顺序运行策略
             for strategy, name in tqdm(
                 zip(strategies, names),
                 total=len(strategies),
@@ -226,10 +226,10 @@ class BacktestEngine:
                     logger.error(f"Error running strategy {name}: {e}")
                     raise
         
-        # Store all results
+        # 存储所有结果
         self.results.update(results)
         
-        # Generate comparison table
+        # 生成比较表
         self._generate_comparison_table()
         
         return results
@@ -242,17 +242,17 @@ class BacktestEngine:
         step_size: int = 21,
         name: str = "WalkForward",
     ) -> Dict[str, BacktestResults]:
-        """Run walk-forward analysis (rolling window backtest).
+        """运行向前滚动分析（滚动窗口回测）。
         
         Args:
-            strategy: Strategy instance.
-            train_size: Number of days for training window.
-            test_size: Number of days for testing window.
-            step_size: Step size to move window forward.
-            name: Base name for results.
+            strategy: 策略实例。
+            train_size: 训练窗口的天数。
+            test_size: 测试窗口的天数。
+            step_size: 窗口向前移动的步长。
+            name: 结果的基础名称。
             
         Returns:
-            Dictionary mapping window names to BacktestResults.
+            映射窗口名称到BacktestResults的字典。
         """
         if len(self.data) < train_size + test_size:
             raise ValueError(
@@ -266,21 +266,21 @@ class BacktestEngine:
         logger.info(f"Starting walk-forward analysis with {total_windows} windows")
         
         for i in tqdm(range(total_windows), desc="Walk-forward analysis"):
-            # Define window indices
+            # 定义窗口索引
             train_start = i * step_size
             train_end = train_start + train_size
             test_start = train_end
             test_end = min(test_start + test_size, len(self.data))
             
-            # Extract windows
+            # 提取窗口
             train_data = self.data.iloc[train_start:train_end]
             test_data = self.data.iloc[test_start:test_end]
             
-            # Skip if test window too small
+            # 如果测试窗口太小则跳过
             if len(test_data) < 10:
                 continue
             
-            # Create new engine for test window
+            # 为测试窗口创建新引擎
             window_engine = BacktestEngine(
                 data=test_data,
                 initial_capital=self.initial_capital,
@@ -290,7 +290,7 @@ class BacktestEngine:
                 risk_free_rate=self.risk_free_rate,
             )
             
-            # Create a fresh strategy instance for this window
+            # 为此窗口创建新的策略实例
             strategy_cls = strategy.__class__
             window_strategy = strategy_cls(
                 name=f"{strategy.name}_window_{i}",

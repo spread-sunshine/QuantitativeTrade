@@ -1,4 +1,4 @@
-# Data fetcher module for acquiring market data from various sources
+# 数据获取模块，用于从各种来源获取市场数据
 import pandas as pd
 import yfinance as yf
 import requests
@@ -22,13 +22,13 @@ logger = setup_logger(__name__)
 
 
 class DataFetcher:
-    """Fetches market data from various sources."""
+    """从各种来源获取市场数据。"""
 
     def __init__(self, cache_enabled: bool = USE_CACHE):
-        """Initialize data fetcher.
+        """初始化数据获取器。
 
         Args:
-            cache_enabled: Whether to use caching for fetched data.
+            cache_enabled: 是否对获取的数据使用缓存。
         """
         self.cache_enabled = cache_enabled
         if cache_enabled:
@@ -49,20 +49,20 @@ class DataFetcher:
         interval: str = "1d",
         auto_adjust: bool = True,
     ) -> pd.DataFrame:
-        """Fetch data from Yahoo Finance.
+        """从雅虎财经获取数据。
 
         Args:
-            symbol: Stock symbol (e.g., 'AAPL').
-            start: Start date in 'YYYY-MM-DD' format. If None, defaults to 1 year ago.
-            end: End date in 'YYYY-MM-DD' format. If None, defaults to today.
-            interval: Data interval ('1d', '1h', '1m', etc.).
-            auto_adjust: Whether to adjust for dividends and splits.
+            symbol: 股票代码（例如 'AAPL'）。
+            start: 开始日期，格式为 'YYYY-MM-DD'。如果为 None，默认为一年前。
+            end: 结束日期，格式为 'YYYY-MM-DD'。如果为 None，默认为今天。
+            interval: 数据间隔（'1d', '1h', '1m' 等）。
+            auto_adjust: 是否调整股息和拆分。
 
         Returns:
-            DataFrame with OHLCV data.
+            包含 OHLCV 数据的 DataFrame。
 
         Raises:
-            ValueError: If Yahoo Finance fetching is disabled or symbol is invalid.
+            ValueError: 如果雅虎财经获取功能被禁用或股票代码无效。
         """
         if not YAHOO_FETCH_ENABLED:
             raise ValueError("Yahoo Finance fetching is disabled in configuration.")
@@ -120,16 +120,16 @@ class DataFetcher:
         end: Optional[str] = None,
         interval: str = "1d",
     ) -> Dict[str, pd.DataFrame]:
-        """Fetch data for multiple symbols.
+        """获取多个股票代码的数据。
 
         Args:
-            symbols: List of stock symbols.
-            start: Start date.
-            end: End date.
-            interval: Data interval.
+            symbols: 股票代码列表。
+            start: 开始日期。
+            end: 结束日期。
+            interval: 数据间隔。
 
         Returns:
-            Dictionary mapping symbol to DataFrame.
+            映射股票代码到 DataFrame 的字典。
         """
         data = {}
         for symbol in symbols:
@@ -155,18 +155,18 @@ class DataFetcher:
         function: str = "TIME_SERIES_DAILY",
         output_size: str = "full",
     ) -> pd.DataFrame:
-        """Fetch data from Alpha Vantage.
+        """从 Alpha Vantage 获取数据。
 
         Args:
-            symbol: Stock symbol.
-            function: API function (TIME_SERIES_DAILY, TIME_SERIES_INTRADAY, etc.).
-            output_size: 'compact' (latest 100 data points) or 'full' (full-length).
+            symbol: 股票代码。
+            function: API 功能（TIME_SERIES_DAILY、TIME_SERIES_INTRADAY 等）。
+            output_size: 'compact'（最新 100 个数据点）或 'full'（全长）。
 
         Returns:
-            DataFrame with OHLCV data.
+            包含 OHLCV 数据的 DataFrame。
 
         Raises:
-            ValueError: If Alpha Vantage is disabled or API key is missing.
+            ValueError: 如果 Alpha Vantage 被禁用或 API 密钥缺失。
         """
         if not ALPHA_VANTAGE_ENABLED:
             raise ValueError("Alpha Vantage fetching is disabled.")
@@ -235,13 +235,13 @@ class DataFetcher:
             raise
 
     def get_available_symbols(self, source: str = "yahoo") -> List[str]:
-        """Get list of available symbols from a data source.
+        """从数据源获取可用的股票代码列表。
 
         Args:
-            source: Data source ('yahoo' or 'alpha_vantage').
+            source: 数据源（'yahoo' 或 'alpha_vantage'）。
 
         Returns:
-            List of available symbols.
+            可用的股票代码列表。
         """
         # This is a simplified implementation
         # In practice, you would fetch from a known list or API
@@ -256,14 +256,14 @@ class DataFetcher:
             raise ValueError(f"Unknown source: {source}")
 
     def validate_symbol(self, symbol: str, source: str = "yahoo") -> bool:
-        """Validate if a symbol exists in the data source.
+        """验证股票代码在数据源中是否存在。
 
         Args:
-            symbol: Symbol to validate.
-            source: Data source.
+            symbol: 要验证的股票代码。
+            source: 数据源。
 
         Returns:
-            True if symbol is valid, False otherwise.
+            如果股票代码有效则为 True，否则为 False。
         """
         try:
             if source == "yahoo":

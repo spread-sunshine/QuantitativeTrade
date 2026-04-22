@@ -1,4 +1,4 @@
-"""Simulated trade execution for backtesting."""
+"""用于回测的模拟交易执行引擎。"""
 
 from typing import Dict, Any, Optional, List, Tuple
 import pandas as pd
@@ -15,27 +15,27 @@ logger = setup_logger(__name__)
 
 
 class OrderType(Enum):
-    """Order types."""
-    MARKET = "market"          # Market order
-    LIMIT = "limit"            # Limit order
-    STOP = "stop"              # Stop order
-    STOP_LIMIT = "stop_limit"  # Stop-limit order
+    """订单类型。"""
+    MARKET = "market"          # 市价订单
+    LIMIT = "limit"            # 限价订单
+    STOP = "stop"              # 止损订单
+    STOP_LIMIT = "stop_limit"  # 止损限价订单
 
 
 class OrderStatus(Enum):
-    """Order status."""
-    PENDING = "pending"        # Order created but not sent
-    SUBMITTED = "submitted"    # Order sent to exchange
-    FILLED = "filled"          # Order completely filled
-    PARTIALLY_FILLED = "partially_filled"  # Order partially filled
-    CANCELLED = "cancelled"    # Order cancelled
+    """订单状态。"""
+    PENDING = "pending"        # 订单已创建但未发送
+    SUBMITTED = "submitted"    # 订单已发送至交易所
+    FILLED = "filled"          # 订单完全成交
+    PARTIALLY_FILLED = "partially_filled"  # 订单部分成交
+    CANCELLED = "cancelled"    # 订单已取消
     REJECTED = "rejected"      # Order rejected
-    EXPIRED = "expired"        # Order expired
+    EXPIRED = "expired"        # 订单已过期
 
 
 @dataclass
 class Order:
-    """Trade order."""
+    """交易订单。"""
     order_id: str
     symbol: str
     order_type: OrderType
@@ -92,15 +92,15 @@ class Order:
 
 
 class SimulatedExecution:
-    """Simulated trade execution engine.
+    """模拟交易执行引擎。
     
-    Features:
-    - Market, limit, stop, stop-limit orders
-    - Slippage and commission modeling
-    - Partial fills
-    - Order expiration
-    - Order matching simulation
-    - Latency simulation
+    功能：
+    - 市价、限价、止损、止损限价订单
+    - 滑点和佣金建模
+    - 部分成交
+    - 订单过期
+    - 订单匹配模拟
+    - 延迟模拟
     """
     
     def __init__(
@@ -108,25 +108,25 @@ class SimulatedExecution:
         initial_capital: float = 100000.0,
         commission_rate: float = 0.001,  # 0.1%
         min_commission: float = 1.0,
-        slippage_model: str = "proportional",  # "proportional", "fixed", "random"
+        slippage_model: str = "proportional",  # 滑点模型类型："proportional"、"fixed"、"random"
         slippage_factor: float = 0.0001,  # 0.01%
         latency_ms: int = 100,
         fill_probability: float = 1.0,
         partial_fill_enabled: bool = True,
         seed: Optional[int] = None,
     ):
-        """Initialize simulated execution engine.
+        """初始化模拟执行引擎。
         
         Args:
-            initial_capital: Initial trading capital.
-            commission_rate: Commission rate per trade.
-            min_commission: Minimum commission per trade.
-            slippage_model: Slippage model type.
-            slippage_factor: Slippage factor.
-            latency_ms: Simulated latency in milliseconds.
-            fill_probability: Probability of order fill (0-1).
-            partial_fill_enabled: Whether to allow partial fills.
-            seed: Random seed for reproducibility.
+            initial_capital: 初始交易资金。
+            commission_rate: 每笔交易的佣金费率。
+            min_commission: 每笔交易的最低佣金。
+            slippage_model: 滑点模型类型。
+            slippage_factor: 滑点因子。
+            latency_ms: 模拟延迟（毫秒）。
+            fill_probability: 订单成交概率（0-1）。
+            partial_fill_enabled: 是否允许部分成交。
+            seed: 用于可重现性的随机种子。
         """
         self.initial_capital = initial_capital
         self.capital = initial_capital
@@ -175,25 +175,25 @@ class SimulatedExecution:
         time_in_force: str = "DAY",
         expiration: Optional[datetime] = None,
     ) -> str:
-        """Submit a new order.
+        """提交新订单。
         
         Args:
-            symbol: Trading symbol.
-            order_type: Order type.
-            side: "BUY" or "SELL".
-            quantity: Order quantity.
-            price: Limit price (for limit orders).
-            stop_price: Stop price (for stop orders).
-            time_in_force: Time in force.
-            expiration: Order expiration time.
+            symbol: 交易代码。
+            order_type: 订单类型。
+            side: "BUY" 或 "SELL"。
+            quantity: 订单数量。
+            price: 限价价格（用于限价订单）。
+            stop_price: 止损价格（用于止损订单）。
+            time_in_force: 订单有效时间。
+            expiration: 订单过期时间。
             
         Returns:
-            Order ID.
+            订单 ID。
         """
-        # Generate order ID
+        # 生成订单 ID
         order_id = f"{symbol}_{side}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         
-        # Validate order
+        # 验证订单
         if not self._validate_order(symbol, side, quantity, price):
             raise ValueError("Order validation failed")
         
@@ -223,13 +223,13 @@ class SimulatedExecution:
         return order_id
     
     def cancel_order(self, order_id: str) -> bool:
-        """Cancel an existing order.
+        """取消现有订单。
         
         Args:
-            order_id: Order ID to cancel.
+            order_id: 要取消的订单 ID。
             
         Returns:
-            True if cancelled successfully.
+            如果取消成功则为 True。
         """
         if order_id not in self.orders:
             logger.warning(f"Order not found: {order_id}")
@@ -241,7 +241,7 @@ class SimulatedExecution:
             logger.warning(f"Cannot cancel order in status: {order.status.value}")
             return False
         
-        # Update order status
+        # 更新订单 status
         order.status = OrderStatus.CANCELLED
         
         logger.info(f"Order cancelled: {order_id}")
@@ -253,11 +253,11 @@ class SimulatedExecution:
         symbol: str,
         data: pd.DataFrame,
     ) -> None:
-        """Update market data for order matching.
+        """更新市场数据以进行订单匹配。
         
         Args:
-            symbol: Trading symbol.
-            data: Market data (must contain 'open', 'high', 'low', 'close').
+            symbol: 交易代码。
+            data: 市场数据（必须包含 'open'、'high'、'low'、'close'）。
         """
         self.market_data[symbol] = data.copy()
         logger.debug(f"Market data updated for {symbol}: {len(data)} data points")
@@ -267,18 +267,18 @@ class SimulatedExecution:
         timestamp: datetime,
         symbol: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Process all pending orders.
+        """处理所有待处理订单。
         
         Args:
-            timestamp: Current timestamp for order processing.
-            symbol: Optional symbol to process orders for.
+            timestamp: 订单处理的当前时间戳。
+            symbol: 可选，指定要处理订单的代码。
             
         Returns:
-            List of filled orders.
+            已成交订单列表。
         """
         filled_orders = []
         
-        # Get orders to process
+        # 获取待处理的订单
         orders_to_process = []
         for order_id, order in self.orders.items():
             if order.status != OrderStatus.SUBMITTED:
@@ -287,7 +287,7 @@ class SimulatedExecution:
             if symbol and order.symbol != symbol:
                 continue
             
-            # Check order expiration
+            # 检查订单过期
             if order.expiration and timestamp > order.expiration:
                 order.status = OrderStatus.EXPIRED
                 logger.info(f"Order expired: {order_id}")
@@ -295,7 +295,7 @@ class SimulatedExecution:
             
             orders_to_process.append(order)
         
-        # Process each order
+        # 处理每个订单
         for order in orders_to_process:
             try:
                 filled = self._process_order(order, timestamp)
@@ -308,13 +308,13 @@ class SimulatedExecution:
         return filled_orders
     
     def get_position(self, symbol: str) -> Dict[str, Any]:
-        """Get current position for a symbol.
+        """获取指定代码的当前持仓。
         
         Args:
-            symbol: Trading symbol.
+            symbol: 交易代码。
             
         Returns:
-            Position dictionary.
+            持仓字典。
         """
         return self.positions.get(symbol, {
             "symbol": symbol,
@@ -326,10 +326,10 @@ class SimulatedExecution:
         })
     
     def get_portfolio_summary(self) -> Dict[str, Any]:
-        """Get portfolio summary.
+        """获取投资组合摘要。
         
         Returns:
-            Portfolio summary dictionary.
+            投资组合摘要字典。
         """
         total_value = self.capital
         total_positions_value = 0.0
@@ -359,7 +359,7 @@ class SimulatedExecution:
         return summary
     
     def reset(self) -> None:
-        """Reset execution engine to initial state."""
+        """将执行引擎重置为初始状态。"""
         self.capital = self.initial_capital
         self.orders.clear()
         self.order_history.clear()
@@ -380,16 +380,16 @@ class SimulatedExecution:
         quantity: float,
         price: Optional[float],
     ) -> bool:
-        """Validate order before submission.
+        """在提交前验证订单。
         
         Args:
-            symbol: Trading symbol.
-            side: "BUY" or "SELL".
-            quantity: Order quantity.
-            price: Order price.
+            symbol: 交易代码。
+            side: "BUY" 或 "SELL"。
+            quantity: 订单数量。
+            price: 订单价格。
             
         Returns:
-            True if order is valid.
+            如果订单有效则为 True。
         """
         if quantity <= 0:
             logger.error("Order quantity must be positive")
@@ -399,17 +399,17 @@ class SimulatedExecution:
             logger.error(f"Invalid order side: {side}")
             return False
         
-        # Check buying power for BUY orders
+        # 检查买单的购买力
         if side == "BUY":
-            # Estimate order value
+            # 估算订单价值
             if price:
                 order_value = quantity * price
             else:
-                # For market orders, need current price
-                # This is a simplified check
-                order_value = quantity * 100  # Assume $100 per share
+                # 对于市价订单，需要当前价格
+                # 这是一个简化的检查
+                order_value = quantity * 100  # 假设每股 100 美元
             
-            # Add estimated commission and slippage
+            # 加上估算的佣金和滑点
             commission = max(order_value * self.commission_rate, self.min_commission)
             slippage = order_value * self.slippage_factor
             
@@ -426,52 +426,52 @@ class SimulatedExecution:
         order: Order,
         timestamp: datetime,
     ) -> bool:
-        """Process a single order.
+        """处理单个订单。
         
         Args:
-            order: Order to process.
-            timestamp: Current timestamp.
+            order: 要处理的订单。
+            timestamp: 当前时间戳。
             
         Returns:
-            True if order was filled.
+            如果订单已成交则为 True。
         """
-        # Get market data
+        # 获取市场数据
         if order.symbol not in self.market_data:
             logger.warning(f"No market data for {order.symbol}")
             return False
         
         market_data = self.market_data[order.symbol]
         
-        # Find matching data point for timestamp
-        # This is simplified - in practice, you'd match exact timestamp
+        # 查找与时间戳匹配的数据点
+        # 这是简化的 - 实际上，您需要匹配精确的时间戳
         data_point = market_data.iloc[-1] if not market_data.empty else None
         
         if data_point is None:
             return False
         
-        # Get market prices
+        # 获取市场价格
         open_price = data_point.get('open', 0)
         high_price = data_point.get('high', 0)
         low_price = data_point.get('low', 0)
         close_price = data_point.get('close', 0)
         
-        # Simulate latency
+        # 模拟延迟
         self._simulate_latency()
         
-        # Check if order can be filled
+        # 检查订单是否可以成交
         fill_price, fill_quantity = self._match_order(
             order, open_price, high_price, low_price, close_price
         )
         
         if fill_quantity <= 0:
-            # Order not filled
+            # 订单未成交
             return False
         
-        # Calculate commission and slippage
+        # 计算佣金和滑点
         commission = self._calculate_commission(fill_price, fill_quantity)
         slippage = self._calculate_slippage(fill_price, fill_quantity, order.order_type)
         
-        # Calculate effective fill price
+        # 计算有效成交价格
         effective_price = fill_price
         
         if order.side == "BUY":
@@ -479,7 +479,7 @@ class SimulatedExecution:
         else:  # SELL
             effective_price -= slippage
         
-        # Update order
+        # 更新订单
         order.filled_quantity += fill_quantity
         order.avg_fill_price = (
             (order.avg_fill_price * (order.filled_quantity - fill_quantity) +
@@ -489,7 +489,7 @@ class SimulatedExecution:
         order.commission += commission
         order.slippage += slippage
         
-        # Check if order is completely filled
+        # 检查订单是否完全成交
         if order.filled_quantity >= order.quantity:
             order.status = OrderStatus.FILLED
         elif order.filled_quantity > 0:
@@ -497,15 +497,15 @@ class SimulatedExecution:
         else:
             order.status = OrderStatus.SUBMITTED
         
-        # Update portfolio
+        # 更新投资组合
         self._update_portfolio(order, effective_price, fill_quantity, commission, timestamp)
         
-        # Update statistics
+        # 更新统计数据
         self.total_commissions += commission
         self.total_slippage += slippage
         self.total_trades += 1
         
-        # Record trade
+        # 记录交易
         trade = {
             "timestamp": timestamp,
             "order_id": order.order_id,
@@ -519,7 +519,7 @@ class SimulatedExecution:
         }
         self.trade_history.append(trade)
         
-        # Move to history if filled or cancelled
+        # 如果订单已成交或取消，则移至历史记录
         if order.status in [OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED]:
             self.order_history.append(order)
             self.orders.pop(order.order_id, None)

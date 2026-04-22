@@ -1,4 +1,4 @@
-# Data processing and feature engineering module
+# 数据处理和特征工程模块
 import pandas as pd
 import numpy as np
 from typing import Optional, List, Dict, Any
@@ -10,20 +10,20 @@ logger = setup_logger(__name__)
 
 
 class DataProcessor:
-    """Processes market data and creates features for trading strategies."""
+    """处理市场数据并为交易策略创建特征。"""
 
     def __init__(self):
-        """Initialize data processor."""
+        """初始化数据处理器。"""
         pass
 
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Clean raw market data.
+        """清理原始市场数据。
 
         Args:
-            df: Raw DataFrame with market data.
+            df: 包含市场数据的原始 DataFrame。
 
         Returns:
-            Cleaned DataFrame.
+            清理后的 DataFrame。
         """
         if df.empty:
             return df
@@ -62,14 +62,14 @@ class DataProcessor:
         return df_clean
 
     def add_returns(self, df: pd.DataFrame, column: str = "close") -> pd.DataFrame:
-        """Add returns to DataFrame.
+        """向 DataFrame 添加收益率。
 
         Args:
-            df: DataFrame with price data.
-            column: Column to calculate returns from.
+            df: 包含价格数据的 DataFrame。
+            column: 用于计算收益率的列。
 
         Returns:
-            DataFrame with added returns columns.
+            添加了收益率列的 DataFrame。
         """
         if df.empty:
             return df
@@ -90,15 +90,15 @@ class DataProcessor:
     def add_moving_averages(
         self, df: pd.DataFrame, windows: List[int] = None, column: str = "close"
     ) -> pd.DataFrame:
-        """Add moving averages to DataFrame.
+        """向 DataFrame 添加移动平均线。
 
         Args:
-            df: DataFrame with price data.
-            windows: List of window sizes for moving averages.
-            column: Column to calculate moving averages on.
+            df: 包含价格数据的 DataFrame。
+            windows: 移动平均线的窗口大小列表。
+            column: 用于计算移动平均线的列。
 
         Returns:
-            DataFrame with added moving average columns.
+            添加了移动平均线列的 DataFrame。
         """
         if df.empty:
             return df
@@ -115,14 +115,14 @@ class DataProcessor:
         return df_result
 
     def add_volatility(self, df: pd.DataFrame, window: int = 20) -> pd.DataFrame:
-        """Add volatility measures to DataFrame.
+        """向 DataFrame 添加波动率指标。
 
         Args:
-            df: DataFrame with returns data.
-            window: Rolling window for volatility calculation.
+            df: 包含收益率数据的 DataFrame。
+            window: 波动率计算的滚动窗口。
 
         Returns:
-            DataFrame with added volatility columns.
+            添加了波动率列的 DataFrame。
         """
         if df.empty:
             return df
@@ -152,13 +152,13 @@ class DataProcessor:
         return df_result
 
     def add_technical_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add common technical indicators to DataFrame.
+        """向 DataFrame 添加常见的技术指标。
 
         Args:
-            df: DataFrame with OHLCV data.
+            df: 包含 OHLCV 数据的 DataFrame。
 
         Returns:
-            DataFrame with added technical indicators.
+            添加了技术指标的 DataFrame。
         """
         if df.empty:
             return df
@@ -219,13 +219,13 @@ class DataProcessor:
         return df_result
 
     def add_time_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add time-based features to DataFrame.
+        """向 DataFrame 添加基于时间的特征。
 
         Args:
-            df: DataFrame with datetime index.
+            df: 具有 datetime 索引的 DataFrame。
 
         Returns:
-            DataFrame with added time features.
+            添加了时间特征的 DataFrame。
         """
         if df.empty:
             return df
@@ -265,15 +265,15 @@ class DataProcessor:
     def prepare_features(
         self, df: pd.DataFrame, target_col: str = "returns", lookahead: int = 1
     ) -> pd.DataFrame:
-        """Prepare features for machine learning.
+        """为机器学习准备特征。
 
         Args:
-            df: DataFrame with market data.
-            target_col: Column to use as target.
-            lookahead: Number of periods ahead for target.
+            df: 包含市场数据的 DataFrame。
+            target_col: 用作目标的列。
+            lookahead: 目标向前预测的周期数。
 
         Returns:
-            DataFrame with features and target.
+            包含特征和目标的 DataFrame。
         """
         if df.empty:
             return df
@@ -315,14 +315,14 @@ class DataProcessor:
         return df_result
 
     def resample_data(self, df: pd.DataFrame, freq: str = "W") -> pd.DataFrame:
-        """Resample data to different frequency.
+        """将数据重采样到不同的频率。
 
         Args:
-            df: DataFrame with datetime index.
-            freq: Resampling frequency ('D', 'W', 'M', 'Q', 'Y').
+            df: 具有 datetime 索引的 DataFrame。
+            freq: 重采样频率（'D', 'W', 'M', 'Q', 'Y'）。
 
         Returns:
-            Resampled DataFrame.
+            重采样后的 DataFrame。
         """
         if df.empty:
             return df
@@ -350,14 +350,14 @@ class DataProcessor:
         return df_resampled
 
     def normalize_data(self, df: pd.DataFrame, columns: List[str] = None) -> pd.DataFrame:
-        """Normalize specified columns.
+        """归一化指定列。
 
         Args:
-            df: DataFrame to normalize.
-            columns: List of columns to normalize. If None, normalize all numeric columns.
+            df: 要归一化的 DataFrame。
+            columns: 要归一化的列列表。如果为 None，则归一化所有数值列。
 
         Returns:
-            DataFrame with normalized columns.
+            包含归一化列的 DataFrame。
         """
         if df.empty:
             return df
@@ -384,15 +384,15 @@ class DataProcessor:
     def split_train_test(
         self, df: pd.DataFrame, test_size: float = 0.2, date_cutoff: str = None
     ) -> tuple:
-        """Split data into training and testing sets.
+        """将数据分割为训练集和测试集。
 
         Args:
-            df: DataFrame to split.
-            test_size: Proportion of data to use for testing (if date_cutoff is None).
-            date_cutoff: Date string to split on (e.g., '2022-01-01').
+            df: 要分割的 DataFrame。
+            test_size: 用于测试的数据比例（如果 date_cutoff 为 None）。
+            date_cutoff: 用于分割的日期字符串（例如 '2022-01-01'）。
 
         Returns:
-            Tuple of (train_df, test_df).
+            包含 (train_df, test_df) 的元组。
         """
         if df.empty:
             return df.copy(), df.copy()

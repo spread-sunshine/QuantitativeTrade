@@ -1,4 +1,4 @@
-# Report generation for trading results
+# 交易结果报告生成
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -23,43 +23,43 @@ logger = setup_logger(__name__)
 
 
 class ReportGenerator:
-    """Generates comprehensive reports for trading strategies."""
+    """为交易策略生成综合报告。"""
 
     def __init__(self, output_dir: Optional[Path] = None):
-        """Initialize report generator.
+        """初始化报告生成器。
 
-        Args:
-            output_dir: Directory to save reports. If None, uses REPORTS_DIR.
+        参数：
+            output_dir: 保存报告的目录。如果为None，则使用REPORTS_DIR。
         """
         if output_dir is None:
             output_dir = REPORTS_DIR
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
         
-        # Report data
+        # 报告数据
         self.results: Dict[str, Any] = {}
         self.strategy_name: str = "Unknown"
         self.report_date: datetime = datetime.now()
 
     def set_results(self, results: Dict[str, Any]):
-        """Set backtest results for reporting.
+        """设置回测结果用于报告生成。
 
-        Args:
-            results: Backtest results dictionary.
+        参数：
+            results: 回测结果字典。
         """
         self.results = results
         self.strategy_name = results.get('strategy_name', 'Unknown')
         logger.info(f"Set results for strategy: {self.strategy_name}")
 
     def calculate_additional_metrics(self) -> Dict[str, Any]:
-        """Calculate additional performance metrics.
+        """计算额外的性能指标。
 
-        Returns:
-            Dictionary with additional metrics.
+        返回：
+            包含额外指标的字典。
         """
         metrics: dict[str, float] = {}
         
-        # Extract basic data
+        # 提取基础数据
         returns = self.results.get('returns')
         equity_curve = self.results.get('equity_curve')
         drawdown = self.results.get('drawdown')
@@ -68,7 +68,7 @@ class ReportGenerator:
             logger.warning("No returns data for additional metrics")
             return metrics
         
-        # Basic metrics already in results
+        # 结果中已有的基础指标
         metrics.update({
             'total_return': self.results.get('total_return', 0),
             'sharpe_ratio': self.results.get('sharpe_ratio', 0),
@@ -78,26 +78,26 @@ class ReportGenerator:
             'num_trades': self.results.get('num_trades', 0),
         })
         
-        # Calculate additional metrics
-        # 1. Annualized metrics
+        # 计算额外指标
+        # 1. 年化指标
         if len(returns) > 0:
             metrics['annualized_return'] = returns.mean() * 252
             metrics['annualized_volatility'] = returns.std() * np.sqrt(252)
         
-        # 2. Downside metrics
+        # 2. 下行指标
         negative_returns = returns[returns < 0]
         if len(negative_returns) > 0:
             metrics['downside_std'] = negative_returns.std() * np.sqrt(252)
             metrics['downside_capture'] = negative_returns.mean() / returns.mean() if returns.mean() != 0 else 0
         
-        # 3. Risk-adjusted returns
+        # 3. 风险调整后收益
         if metrics.get('annualized_volatility', 0) > 0:
             metrics['calmar_ratio'] = (
                 metrics['annualized_return'] / abs(metrics['max_drawdown'])
                 if metrics['max_drawdown'] != 0 else 0
             )
         
-        # 4. Trade statistics
+        # 4. 交易统计
         if 'signals' in self.results and self.results['signals'] is not None:
             signals = self.results['signals']
             if 'signal' in signals.columns:
@@ -106,26 +106,26 @@ class ReportGenerator:
                 metrics['num_sell_signals'] = (trade_changes == -1).sum()
                 metrics['avg_trade_duration'] = self._calculate_avg_trade_duration(signals)
         
-        # 5. Profit factor
+        # 5. 盈亏比
         if 'returns' in self.results and self.results['returns'] is not None:
             gross_profits = returns[returns > 0].sum()
             gross_losses = abs(returns[returns < 0].sum())
             metrics['profit_factor'] = gross_profits / gross_losses if gross_losses > 0 else np.inf
         
-        # 6. Recovery factor
+        # 6. 恢复因子
         if drawdown is not None and not drawdown.empty:
             metrics['recovery_factor'] = self._calculate_recovery_factor(drawdown)
         
-        # 7. Value at Risk (VaR) and Conditional VaR
+        # 7. 风险价值（VaR）和条件风险价值
         if len(returns) > 0:
             metrics['var_95'] = np.percentile(returns, 5)
             metrics['cvar_95'] = returns[returns <= metrics['var_95']].mean()
         
-        # 8. Skewness and kurtosis
+        # 8. 偏度和峰度
         metrics['skewness'] = returns.skew()
         metrics['kurtosis'] = returns.kurtosis()
         
-        # 9. Best and worst periods
+        # 9. 最佳和最差时期
         if len(returns) > 0:
             rolling_21 = returns.rolling(window=21).sum()  # Monthly returns
             metrics['best_month'] = rolling_21.max()
@@ -135,25 +135,25 @@ class ReportGenerator:
             metrics['best_year'] = rolling_252.max()
             metrics['worst_year'] = rolling_252.min()
         
-        # 10. Consistency metrics
+        # 10. 一致性指标
         if len(returns) > 0:
             positive_months = (returns.resample('M').sum() > 0).mean()
             metrics['positive_month_rate'] = positive_months
             
-            # Streaks
+            # 连续期数
             metrics['longest_winning_streak'] = self._calculate_longest_streak(returns > 0)
             metrics['longest_losing_streak'] = self._calculate_longest_streak(returns < 0)
         
         return metrics
 
     def _calculate_avg_trade_duration(self, signals: pd.DataFrame) -> float:
-        """Calculate average trade duration in days.
+        """计算平均交易持续时间（天数）。
 
-        Args:
-            signals: DataFrame with trading signals.
+        参数：
+            signals: 包含交易信号的DataFrame。
 
-        Returns:
-            Average trade duration in days.
+        返回：
+            平均交易持续时间（天数）。
         """
         if 'position' not in signals.columns:
             return 0
@@ -170,20 +170,20 @@ class ReportGenerator:
         
         for date, is_start in zip(signals.index, trade_starts):
             if is_start and not in_trade:
-                # Start of new trade
+                # 新交易开始
                 in_trade = True
                 start_date = date
             elif is_start and in_trade:
-                # End of previous trade, start of new
+                # 前一个交易结束，新交易开始
                 if start_date:
                     duration = (date - start_date).days
                     durations.append(duration)
                 start_date = date
             elif not is_start and not in_trade:
-                # Not in trade
+                # 未在交易中
                 continue
         
-        # Handle last trade if still open
+        # 处理仍未平仓的最后交易
         if in_trade and start_date:
             duration = (signals.index[-1] - start_date).days
             durations.append(duration)
@@ -191,25 +191,25 @@ class ReportGenerator:
         return np.mean(durations) if durations else 0
 
     def _calculate_recovery_factor(self, drawdown: pd.Series) -> float:
-        """Calculate recovery factor.
+        """计算恢复因子。
 
-        Args:
-            drawdown: Drawdown series.
+        参数：
+            drawdown: 回撤序列。
 
-        Returns:
-            Recovery factor.
+        返回：
+            恢复因子。
         """
         if drawdown.empty:
             return 0
         
-        # Find major drawdown periods
+        # 寻找主要回撤期
         major_drawdowns = []
         in_drawdown = False
         drawdown_start = None
         max_dd_depth = 0
         
         for date, dd in zip(drawdown.index, drawdown.values):
-            if dd < -0.05:  # Only consider drawdowns > 5%
+            if dd < -0.05:  # 仅考虑回撤大于5%的情况
                 if not in_drawdown:
                     in_drawdown = True
                     drawdown_start = date
@@ -227,13 +227,13 @@ class ReportGenerator:
         return np.mean(major_drawdowns) if major_drawdowns else 0
 
     def _calculate_longest_streak(self, condition: pd.Series) -> int:
-        """Calculate longest streak where condition is True.
+        """计算条件为True的最长连续期数。
 
-        Args:
-            condition: Boolean series.
+        参数：
+            condition: 布尔序列。
 
-        Returns:
-            Longest streak length.
+        返回：
+            最长连续期数。
         """
         if condition.empty:
             return 0
@@ -251,23 +251,23 @@ class ReportGenerator:
         return longest_streak
 
     def generate_visualizations(self, save_prefix: Optional[str] = None):
-        """Generate all visualizations.
+        """生成所有可视化图表。
 
-        Args:
-            save_prefix: Prefix for saved files.
+        参数：
+            save_prefix: 保存文件的前缀。
         """
         if save_prefix is None:
             save_prefix = self.strategy_name.replace(' ', '_')
         
-        # Extract data
+        # 提取数据
         equity_curve = self.results.get('equity_curve')
         returns = self.results.get('returns')
         drawdown = self.results.get('drawdown')
         signals = self.results.get('signals')
         
-        # Generate visualizations
+        # 生成可视化图表
         if equity_curve is not None and not equity_curve.empty:
-            # Equity curve
+            # 权益曲线
             equity_path = self.output_dir / f"{save_prefix}_equity_curve.png"
             create_equity_curve(
                 equity_curve,
@@ -275,7 +275,7 @@ class ReportGenerator:
                 save_path=str(equity_path)
             )
             
-            # Interactive equity curve (HTML)
+            # 交互式权益曲线（HTML）
             interactive_path = self.output_dir / f"{save_prefix}_interactive_equity.html"
             create_interactive_equity_curve(
                 equity_curve,
@@ -284,7 +284,7 @@ class ReportGenerator:
             )
         
         if drawdown is not None and not drawdown.empty:
-            # Drawdown chart
+            # 回撤图表
             drawdown_path = self.output_dir / f"{save_prefix}_drawdown.png"
             create_drawdown_chart(
                 drawdown,
@@ -293,7 +293,7 @@ class ReportGenerator:
             )
         
         if returns is not None and not returns.empty:
-            # Returns distribution
+            # 收益分布
             returns_path = self.output_dir / f"{save_prefix}_returns_dist.png"
             create_returns_distribution(
                 returns,
@@ -301,7 +301,7 @@ class ReportGenerator:
                 save_path=str(returns_path)
             )
             
-            # Rolling metrics
+            # 滚动指标
             rolling_path = self.output_dir / f"{save_prefix}_rolling_metrics.png"
             create_rolling_metrics(
                 returns,
@@ -310,7 +310,7 @@ class ReportGenerator:
             )
         
         if signals is not None and not signals.empty and 'close' in signals.columns:
-            # Trade analysis
+            # 交易分析
             trade_path = self.output_dir / f"{save_prefix}_trade_analysis.png"
             create_trade_analysis(
                 signals,
@@ -319,7 +319,7 @@ class ReportGenerator:
                 save_path=str(trade_path)
             )
         
-        # Performance dashboard
+        # 绩效仪表盘
         dashboard_path = self.output_dir / f"{save_prefix}_dashboard.png"
         create_performance_dashboard(
             self.results,
@@ -329,15 +329,15 @@ class ReportGenerator:
         logger.info(f"Generated visualizations in {self.output_dir}")
 
     def generate_text_report(self) -> str:
-        """Generate text report.
+        """生成文本报告。
 
-        Returns:
-            Formatted text report.
+        返回：
+            格式化的文本报告。
         """
-        # Calculate metrics
+        # 计算指标
         metrics = self.calculate_additional_metrics()
         
-        # Create report header
+        # 创建报告头部
         report = f"{'='*80}\n"
         report += f"STRATEGY PERFORMANCE REPORT\n"
         report += f"{'='*80}\n\n"
@@ -347,7 +347,7 @@ class ReportGenerator:
         report += f"Period: {self.results.get('period', 'N/A')}\n"
         report += f"\n{'='*80}\n"
         
-        # Performance Summary
+        # 绩效摘要
         report += "PERFORMANCE SUMMARY\n"
         report += f"{'='*80}\n"
         
@@ -367,7 +367,7 @@ class ReportGenerator:
         
         report += f"\n{'='*80}\n"
         
-        # Risk Metrics
+        # 风险指标
         report += "RISK METRICS\n"
         report += f"{'='*80}\n"
         
@@ -388,7 +388,7 @@ class ReportGenerator:
         
         report += f"\n{'='*80}\n"
         
-        # Trade Statistics
+        # 交易统计
         report += "TRADE STATISTICS\n"
         report += f"{'='*80}\n"
         
@@ -407,7 +407,7 @@ class ReportGenerator:
         
         report += f"\n{'='*80}\n"
         
-        # Additional Information
+        # 附加信息
         report += "ADDITIONAL INFORMATION\n"
         report += f"{'='*80}\n"
         
@@ -418,7 +418,7 @@ class ReportGenerator:
         report += f"Final Equity: ${final_equity:,.2f}\n"
         report += f"Net Profit: ${final_equity - initial_capital:,.2f}\n"
         
-        # Strategy parameters if available
+        # 如果存在策略参数
         if 'parameters' in self.results:
             report += f"\nStrategy Parameters:\n"
             for key, value in self.results['parameters'].items():
@@ -431,10 +431,10 @@ class ReportGenerator:
         return report
 
     def generate_json_report(self) -> Dict[str, Any]:
-        """Generate JSON report.
+        """生成JSON报告。
 
-        Returns:
-            Dictionary with report data.
+        返回：
+            包含报告数据的字典。
         """
         metrics = self.calculate_additional_metrics()
         
@@ -486,10 +486,10 @@ class ReportGenerator:
         return report
 
     def save_report(self, format: str = "all"):
-        """Save report in specified format.
+        """以指定格式保存报告。
 
-        Args:
-            format: Report format ('text', 'json', 'html', 'all').
+        参数：
+            format: 报告格式（'text'、'json'、'html'、'all'）。
         """
         base_name = self.strategy_name.replace(' ', '_')
         
@@ -509,7 +509,7 @@ class ReportGenerator:
                 json.dump(json_report, f, indent=2, default=str)
             logger.info(f"Saved JSON report to {json_path}")
         
-        # Generate visualizations
+        # 生成可视化图表
         self.generate_visualizations(base_name)
         
         logger.info(f"Report generation complete for {self.strategy_name}")
@@ -520,15 +520,15 @@ def generate_report(
     output_dir: Optional[Path] = None,
     format: str = "all",
 ) -> ReportGenerator:
-    """Convenience function to generate report.
+    """生成报告的便捷函数。
 
-    Args:
-        results: Backtest results dictionary.
-        output_dir: Directory to save reports.
-        format: Report format.
+    参数：
+        results: 回测结果字典。
+        output_dir: 保存报告的目录。
+        format: 报告格式。
 
-    Returns:
-        ReportGenerator instance.
+    返回：
+        ReportGenerator实例。
     """
     generator = ReportGenerator(output_dir)
     generator.set_results(results)

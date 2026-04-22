@@ -1,4 +1,4 @@
-# Backtesting engine module
+# 回测引擎模块
 
 from .engine import BacktestEngine
 from .results import BacktestResults

@@ -1,4 +1,4 @@
-"""Stop loss calculation and management."""
+"""止损计算与管理。"""
 
 from typing import Dict, Any, Optional, Tuple, List
 import pandas as pd
@@ -13,31 +13,31 @@ logger = setup_logger(__name__)
 
 
 class StopLossType(Enum):
-    """Stop loss types."""
-    FIXED_PERCENTAGE = "fixed_percentage"      # Fixed percentage from entry
-    ATR_BASED = "atr_based"                    # Based on Average True Range
-    VOLATILITY_BASED = "volatility_based"      # Based on volatility
-    TRAILING = "trailing"                      # Trailing stop loss
-    PARABOLIC_SAR = "parabolic_sar"           # Parabolic SAR
-    CHANDELIER = "chandelier"                  # Chandelier exit
-    TIME_BASED = "time_based"                  # Time-based stop
-    MOVING_AVERAGE = "moving_average"          # Moving average stop
-    SUPPORT_RESISTANCE = "support_resistance"  # Support/resistance levels
+    """止损类型。"""
+    FIXED_PERCENTAGE = "fixed_percentage"      # 入场固定百分比
+    ATR_BASED = "atr_based"                    # 基于平均真实波幅
+    VOLATILITY_BASED = "volatility_based"      # 基于波动率
+    TRAILING = "trailing"                      # 跟踪止损
+    PARABOLIC_SAR = "parabolic_sar"           # 抛物线转向指标
+    CHANDELIER = "chandelier"                  # 吊灯退出
+    TIME_BASED = "time_based"                  # 时间止损
+    MOVING_AVERAGE = "moving_average"          # 移动平均止损
+    SUPPORT_RESISTANCE = "support_resistance"  # 支撑/阻力位
 
 
 class StopLossCalculator:
-    """Stop loss calculator with multiple strategies.
+    """多策略止损计算器。
     
-    Implements various stop loss methods:
-    - Fixed percentage stop
-    - ATR-based stop
-    - Volatility-based stop
-    - Trailing stop
-    - Parabolic SAR
-    - Chandelier exit
-    - Time-based stop
-    - Moving average stop
-    - Support/resistance stop
+    实现多种止损方法：
+    - 固定百分比止损
+    - 基于ATR的止损
+    - 基于波动率的止损
+    - 跟踪止损
+    - 抛物线转向指标
+    - 吊灯退出
+    - 时间止损
+    - 移动平均止损
+    - 支撑/阻力止损
     """
     
     def __init__(
@@ -54,20 +54,20 @@ class StopLossCalculator:
         time_stop_days: int = 10,
         ma_period: int = 20,
     ):
-        """Initialize stop loss calculator.
+        """初始化止损计算器。
         
-        Args:
-            stop_type: Stop loss type.
-            default_stop_pct: Default stop loss percentage.
-            atr_multiplier: Multiplier for ATR-based stops.
-            volatility_multiplier: Multiplier for volatility-based stops.
-            trailing_pct: Percentage for trailing stops.
-            sar_acceleration: Acceleration factor for Parabolic SAR.
-            sar_maximum: Maximum acceleration for Parabolic SAR.
-            chandelier_atr_multiplier: Multiplier for Chandelier exit.
-            chandelier_lookback: Lookback period for Chandelier exit.
-            time_stop_days: Days for time-based stop.
-            ma_period: Period for moving average stop.
+        参数：
+            stop_type: 止损类型。
+            default_stop_pct: 默认止损百分比。
+            atr_multiplier: 基于ATR止损的乘数。
+            volatility_multiplier: 基于波动率止损的乘数。
+            trailing_pct: 跟踪止损百分比。
+            sar_acceleration: 抛物线转向指标的加速因子。
+            sar_maximum: 抛物线转向指标的最大加速值。
+            chandelier_atr_multiplier: 吊灯退出的ATR乘数。
+            chandelier_lookback: 吊灯退出的回溯期。
+            time_stop_days: 时间止损天数。
+            ma_period: 移动平均止损周期。
         """
         self.stop_type = stop_type
         self.default_stop_pct = default_stop_pct
@@ -100,23 +100,23 @@ class StopLossCalculator:
         resistance_level: Optional[float] = None,
         custom_params: Optional[Dict[str, Any]] = None,
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate stop loss price.
+        """计算止损价格。
         
-        Args:
-            symbol: Trading symbol.
-            entry_price: Entry price.
-            position_type: "LONG" or "SHORT".
-            current_price: Current market price.
-            historical_data: Historical price data (OHLC).
-            entry_time: Entry timestamp.
-            atr: Current ATR value.
-            volatility: Current volatility.
-            support_level: Support level price.
-            resistance_level: Resistance level price.
-            custom_params: Custom parameters overriding defaults.
+        参数：
+            symbol: 交易标的。
+            entry_price: 入场价格。
+            position_type: "LONG" 或 "SHORT"。
+            current_price: 当前市场价格。
+            historical_data: 历史价格数据（OHLC）。
+            entry_time: 入场时间戳。
+            atr: 当前ATR值。
+            volatility: 当前波动率。
+            support_level: 支撑位价格。
+            resistance_level: 阻力位价格。
+            custom_params: 自定义参数，覆盖默认值。
             
-        Returns:
-            Tuple of (stop_loss_price, calculation_details).
+        返回：
+            元组 (止损价格, 计算详情)。
         """
         # Apply custom parameters if provided
         params = self._get_parameters(custom_params)
@@ -191,15 +191,15 @@ class StopLossCalculator:
         current_price: float,
         timestamp: datetime,
     ) -> Tuple[bool, Optional[float], Dict[str, Any]]:
-        """Check if stop loss is triggered.
+        """检查止损是否触发。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current market price.
-            timestamp: Current timestamp.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前市场价格。
+            timestamp: 当前时间戳。
             
-        Returns:
-            Tuple of (is_triggered, stop_price, trigger_details).
+        返回：
+            元组 (是否触发, 止损价格, 触发详情)。
         """
         if symbol not in self.active_stops:
             return False, None, {"error": "No active stop for symbol"}
@@ -250,15 +250,15 @@ class StopLossCalculator:
         current_price: float,
         timestamp: datetime,
     ) -> Optional[float]:
-        """Update trailing stop loss for a position.
+        """更新仓位的跟踪止损。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current market price.
-            timestamp: Current timestamp.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前市场价格。
+            timestamp: 当前时间戳。
             
-        Returns:
-            New stop price if updated, None otherwise.
+        返回：
+            如果更新则返回新的止损价格，否则返回 None。
         """
         if symbol not in self.active_stops:
             return None
@@ -317,36 +317,36 @@ class StopLossCalculator:
         return new_stop if new_stop != current_stop else None
     
     def get_active_stops(self) -> Dict[str, Dict[str, Any]]:
-        """Get all active stop losses.
+        """获取所有活跃止损。
         
-        Returns:
-            Dictionary of active stops.
+        返回：
+            活跃止损字典。
         """
         return self.active_stops.copy()
     
     def clear_stop(self, symbol: str) -> None:
-        """Clear stop loss for a symbol.
+        """清除标的的止损。
         
-        Args:
-            symbol: Trading symbol.
+        参数：
+            symbol: 交易标的。
         """
         if symbol in self.active_stops:
             self.active_stops.pop(symbol)
             logger.debug(f"Stop loss cleared for {symbol}")
     
     def clear_all_stops(self) -> None:
-        """Clear all active stop losses."""
+        """清除所有活跃止损。"""
         self.active_stops.clear()
         logger.debug("All stop losses cleared")
     
     def _get_parameters(self, custom_params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Get stop loss parameters with custom overrides.
+        """获取止损参数，支持自定义覆盖。
         
-        Args:
-            custom_params: Custom parameters.
+        参数：
+            custom_params: 自定义参数。
             
-        Returns:
-            Parameters dictionary.
+        返回：
+            参数字典。
         """
         params = {
             "default_stop_pct": self.default_stop_pct,
@@ -372,15 +372,15 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate fixed percentage stop loss.
+        """计算固定百分比止损。
         
-        Args:
-            entry_price: Entry price.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            entry_price: 入场价格。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         stop_pct = params.get("default_stop_pct", self.default_stop_pct)
         
@@ -403,16 +403,16 @@ class StopLossCalculator:
         atr: Optional[float],
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate ATR-based stop loss.
+        """计算基于ATR的止损。
         
-        Args:
-            entry_price: Entry price.
-            position_type: "LONG" or "SHORT".
-            atr: Current ATR value.
-            params: Parameters dictionary.
+        参数：
+            entry_price: 入场价格。
+            position_type: "LONG" 或 "SHORT"。
+            atr: 当前ATR值。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if atr is None or atr <= 0:
             # Fallback to fixed percentage
@@ -442,16 +442,16 @@ class StopLossCalculator:
         volatility: Optional[float],
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate volatility-based stop loss.
+        """计算基于波动率的止损。
         
-        Args:
-            entry_price: Entry price.
-            position_type: "LONG" or "SHORT".
-            volatility: Current volatility (annualized).
-            params: Parameters dictionary.
+        参数：
+            entry_price: 入场价格。
+            position_type: "LONG" 或 "SHORT"。
+            volatility: 当前波动率（年化）。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if volatility is None or volatility <= 0:
             # Fallback to fixed percentage
@@ -486,17 +486,17 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate trailing stop loss.
+        """计算跟踪止损。
         
-        Args:
-            symbol: Trading symbol.
-            entry_price: Entry price.
-            current_price: Current market price.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            symbol: 交易标的。
+            entry_price: 入场价格。
+            current_price: 当前市场价格。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         trailing_pct = params.get("trailing_pct", self.trailing_pct)
         
@@ -536,16 +536,16 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate Parabolic SAR stop loss.
+        """计算抛物线转向指标止损。
         
-        Args:
-            symbol: Trading symbol.
-            historical_data: Historical OHLC data.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            symbol: 交易标的。
+            historical_data: 历史OHLC数据。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if historical_data is None or len(historical_data) < 2:
             # Fallback to fixed percentage
@@ -600,16 +600,16 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate Chandelier exit stop loss.
+        """计算吊灯退出止损。
         
-        Args:
-            symbol: Trading symbol.
-            historical_data: Historical OHLC data.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            symbol: 交易标的。
+            historical_data: 历史OHLC数据。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if historical_data is None or len(historical_data) < 22:
             # Fallback to fixed percentage
@@ -664,17 +664,17 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate time-based stop loss.
+        """计算时间止损。
         
-        Args:
-            symbol: Trading symbol.
-            entry_price: Entry price.
-            entry_time: Entry timestamp.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            symbol: 交易标的。
+            entry_price: 入场价格。
+            entry_time: 入场时间戳。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         days = params.get("time_stop_days", self.time_stop_days)
         
@@ -708,16 +708,16 @@ class StopLossCalculator:
         position_type: str,
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate moving average stop loss.
+        """计算移动平均止损。
         
-        Args:
-            symbol: Trading symbol.
-            historical_data: Historical OHLC data.
-            position_type: "LONG" or "SHORT".
-            params: Parameters dictionary.
+        参数：
+            symbol: 交易标的。
+            historical_data: 历史OHLC数据。
+            position_type: "LONG" 或 "SHORT"。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if historical_data is None or len(historical_data) < 20:
             # Fallback to fixed percentage
@@ -752,17 +752,17 @@ class StopLossCalculator:
         resistance_level: Optional[float],
         params: Dict[str, Any],
     ) -> Tuple[float, Dict[str, Any]]:
-        """Calculate support/resistance stop loss.
+        """计算支撑/阻力止损。
         
-        Args:
-            entry_price: Entry price.
-            position_type: "LONG" or "SHORT".
-            support_level: Support level price.
-            resistance_level: Resistance level price.
-            params: Parameters dictionary.
+        参数：
+            entry_price: 入场价格。
+            position_type: "LONG" 或 "SHORT"。
+            support_level: 支撑位价格。
+            resistance_level: 阻力位价格。
+            params: 参数字典。
             
-        Returns:
-            Tuple of (stop_price, details).
+        返回：
+            元组 (止损价格, 详情)。
         """
         if position_type == "LONG":
             if support_level is not None and support_level > 0:
@@ -791,12 +791,12 @@ class StopLossCalculator:
         stop_price: float,
         details: Dict[str, Any],
     ) -> None:
-        """Update active stop information.
+        """更新活跃止损信息。
         
-        Args:
-            symbol: Trading symbol.
-            stop_price: Stop loss price.
-            details: Calculation details.
+        参数：
+            symbol: 交易标的。
+            stop_price: 止损价格。
+            details: 计算详情。
         """
         if symbol not in self.active_stops:
             self.active_stops[symbol] = {}

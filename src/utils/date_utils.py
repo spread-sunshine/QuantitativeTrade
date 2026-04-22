@@ -1,4 +1,4 @@
-# Date utility functions for trading system
+# 交易系统的日期工具函数
 from datetime import datetime, timedelta, date
 import pandas as pd
 from typing import Optional, Tuple, List
@@ -6,21 +6,21 @@ import calendar
 
 
 class DateUtils:
-    """Utility class for date operations in trading."""
+    """交易中日期操作的实用类。"""
 
     @staticmethod
     def get_trading_days(
         start_date: str, end_date: str, include_weekends: bool = False
     ) -> List[date]:
-        """Get list of trading days between two dates.
+        """获取两个日期之间的交易日列表。
 
         Args:
-            start_date: Start date in 'YYYY-MM-DD' format.
-            end_date: End date in 'YYYY-MM-DD' format.
-            include_weekends: Whether to include weekends.
+            start_date: 开始日期，格式为 'YYYY-MM-DD'。
+            end_date: 结束日期，格式为 'YYYY-MM-DD'。
+            include_weekends: 是否包含周末。
 
         Returns:
-            List of trading days.
+            交易日列表。
         """
         start = pd.to_datetime(start_date).date()
         end = pd.to_datetime(end_date).date()
@@ -30,27 +30,27 @@ class DateUtils:
 
     @staticmethod
     def is_trading_day(check_date: str) -> bool:
-        """Check if a date is a trading day (weekday).
+        """检查日期是否为交易日（工作日）。
 
         Args:
-            check_date: Date to check in 'YYYY-MM-DD' format.
+            check_date: 要检查的日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            True if it's a trading day, False otherwise.
+            如果是交易日返回 True，否则返回 False。
         """
         check_date = pd.to_datetime(check_date)
         return check_date.weekday() < 5  # Monday=0, Sunday=6
 
     @staticmethod
     def get_next_trading_day(from_date: str, n: int = 1) -> date:
-        """Get the next trading day.
+        """获取下一个交易日。
 
         Args:
-            from_date: Starting date in 'YYYY-MM-DD' format.
-            n: Number of trading days ahead.
+            from_date: 起始日期，格式为 'YYYY-MM-DD'。
+            n: 向前的交易日数量。
 
         Returns:
-            Next trading day.
+            下一个交易日。
         """
         from_date = pd.to_datetime(from_date)
         trading_days = pd.date_range(start=from_date, periods=n + 5, freq="B")
@@ -58,14 +58,14 @@ class DateUtils:
 
     @staticmethod
     def get_previous_trading_day(from_date: str, n: int = 1) -> date:
-        """Get the previous trading day.
+        """获取前一个交易日。
 
         Args:
-            from_date: Starting date in 'YYYY-MM-DD' format.
-            n: Number of trading days back.
+            from_date: 起始日期，格式为 'YYYY-MM-DD'。
+            n: 向后的交易日数量。
 
         Returns:
-            Previous trading day.
+            前一个交易日。
         """
         from_date = pd.to_datetime(from_date)
         trading_days = pd.date_range(end=from_date, periods=n + 5, freq="B")
@@ -73,13 +73,13 @@ class DateUtils:
 
     @staticmethod
     def get_month_end(date_str: str) -> date:
-        """Get the last day of the month for a given date.
+        """获取给定日期所在月份的最后一天。
 
         Args:
-            date_str: Date in 'YYYY-MM-DD' format.
+            date_str: 日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            Last day of the month.
+            月份的最后一天。
         """
         dt = pd.to_datetime(date_str)
         year, month = dt.year, dt.month
@@ -88,13 +88,13 @@ class DateUtils:
 
     @staticmethod
     def get_quarter_end(date_str: str) -> date:
-        """Get the last day of the quarter for a given date.
+        """获取给定日期所在季度的最后一天。
 
         Args:
-            date_str: Date in 'YYYY-MM-DD' format.
+            date_str: 日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            Last day of the quarter.
+            季度的最后一天。
         """
         dt = pd.to_datetime(date_str)
         quarter = (dt.month - 1) // 3 + 1
@@ -105,13 +105,13 @@ class DateUtils:
 
     @staticmethod
     def get_year_end(date_str: str) -> date:
-        """Get the last day of the year for a given date.
+        """获取给定日期所在年份的最后一天。
 
         Args:
-            date_str: Date in 'YYYY-MM-DD' format.
+            date_str: 日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            Last day of the year.
+            年份的最后一天。
         """
         dt = pd.to_datetime(date_str)
         return date(dt.year, 12, 31)
@@ -120,14 +120,14 @@ class DateUtils:
     def split_by_year(
         start_date: str, end_date: str
     ) -> List[Tuple[str, str]]:
-        """Split date range by year.
+        """按年份分割日期范围。
 
         Args:
-            start_date: Start date in 'YYYY-MM-DD' format.
-            end_date: End date in 'YYYY-MM-DD' format.
+            start_date: 开始日期，格式为 'YYYY-MM-DD'。
+            end_date: 结束日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            List of (year_start, year_end) tuples.
+            (年份开始, 年份结束) 元组列表。
         """
         start = pd.to_datetime(start_date)
         end = pd.to_datetime(end_date)
@@ -152,14 +152,14 @@ class DateUtils:
     def split_by_month(
         start_date: str, end_date: str
     ) -> List[Tuple[str, str]]:
-        """Split date range by month.
+        """按月份分割日期范围。
 
         Args:
-            start_date: Start date in 'YYYY-MM-DD' format.
-            end_date: End date in 'YYYY-MM-DD' format.
+            start_date: 开始日期，格式为 'YYYY-MM-DD'。
+            end_date: 结束日期，格式为 'YYYY-MM-DD'。
 
         Returns:
-            List of (month_start, month_end) tuples.
+            (月份开始, 月份结束) 元组列表。
         """
         start = pd.to_datetime(start_date)
         end = pd.to_datetime(end_date)
@@ -192,15 +192,15 @@ class DateUtils:
     def get_date_ranges(
         start_date: str, end_date: str, chunk_size: int = 30
     ) -> List[Tuple[str, str]]:
-        """Split date range into chunks of specified size.
+        """将日期范围分割为指定大小的块。
 
         Args:
-            start_date: Start date in 'YYYY-MM-DD' format.
-            end_date: End date in 'YYYY-MM-DD' format.
-            chunk_size: Number of days per chunk.
+            start_date: 开始日期，格式为 'YYYY-MM-DD'。
+            end_date: 结束日期，格式为 'YYYY-MM-DD'。
+            chunk_size: 每个块的天数。
 
         Returns:
-            List of (chunk_start, chunk_end) tuples.
+            (块开始, 块结束) 元组列表。
         """
         start = pd.to_datetime(start_date)
         end = pd.to_datetime(end_date)
@@ -219,71 +219,71 @@ class DateUtils:
 
     @staticmethod
     def get_market_holidays(year: int) -> List[date]:
-        """Get US market holidays for a given year.
+        """获取给定年份的美国市场假日。
 
         Args:
-            year: Year to get holidays for.
+            year: 要获取假日的年份。
 
         Returns:
-            List of holiday dates.
+            假日日期列表。
         """
-        # This is a simplified list of US market holidays
-        # In production, use a proper holiday calendar
+        # 这是美国市场假日的简化列表
+        # 在生产环境中，请使用合适的假日日历
         holidays = []
 
-        # New Year's Day
+        # 元旦
         try:
             holidays.append(date(year, 1, 1))
         except ValueError:
-            pass  # Handle cases where Jan 1 falls on weekend
+            pass  # 处理1月1日落在周末的情况
 
-        # Martin Luther King Jr. Day (third Monday in January)
+        # 马丁·路德·金纪念日（一月的第三个星期一）
         mlk_day = DateUtils._get_nth_weekday(year, 1, 0, 3)  # 0 = Monday
         holidays.append(mlk_day)
 
-        # Presidents Day (third Monday in February)
+        # 总统日（二月的第三个星期一）
         presidents_day = DateUtils._get_nth_weekday(year, 2, 0, 3)
         holidays.append(presidents_day)
 
-        # Good Friday (approximation - Friday before Easter)
+        # 耶稣受难日（近似值 - 复活节前的星期五）
         good_friday = DateUtils._calculate_good_friday(year)
         holidays.append(good_friday)
 
-        # Memorial Day (last Monday in May)
+        # 阵亡将士纪念日（五月的最后一个星期一）
         memorial_day = DateUtils._get_last_weekday(year, 5, 0)
         holidays.append(memorial_day)
 
-        # Juneteenth (June 19)
+        # 六月节（6月19日）
         holidays.append(date(year, 6, 19))
 
-        # Independence Day (July 4)
+        # 独立日（7月4日）
         holidays.append(date(year, 7, 4))
 
-        # Labor Day (first Monday in September)
+        # 劳动节（九月的第一个星期一）
         labor_day = DateUtils._get_nth_weekday(year, 9, 0, 1)
         holidays.append(labor_day)
 
-        # Thanksgiving Day (fourth Thursday in November)
+        # 感恩节（十一月的第四个星期四）
         thanksgiving = DateUtils._get_nth_weekday(year, 11, 3, 4)  # 3 = Thursday
         holidays.append(thanksgiving)
 
-        # Christmas Day (December 25)
+        # 圣诞节（12月25日）
         holidays.append(date(year, 12, 25))
 
         return holidays
 
     @staticmethod
     def _get_nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
-        """Get the nth weekday of a given month.
+        """获取给定月份的第n个工作日。
 
         Args:
-            year: Year.
-            month: Month (1-12).
-            weekday: Weekday (0=Monday, 6=Sunday).
-            n: Nth occurrence (1=first, 4=fourth, etc.)
+            year: 年份。
+            month: 月份 (1-12)。
+            weekday: 工作日 (0=星期一, 6=星期日)。
+            n: 第n次出现 (1=第一次, 4=第四次, 等等)。
 
         Returns:
-            Date of the nth weekday.
+            第n个工作日的日期。
         """
         if n < 1 or n > 5:
             raise ValueError("n must be between 1 and 5")
@@ -307,15 +307,15 @@ class DateUtils:
 
     @staticmethod
     def _get_last_weekday(year: int, month: int, weekday: int) -> date:
-        """Get the last weekday of a given month.
+        """获取给定月份的最后工作日。
 
         Args:
-            year: Year.
-            month: Month (1-12).
-            weekday: Weekday (0=Monday, 6=Sunday).
+            year: 年份。
+            month: 月份 (1-12)。
+            weekday: 工作日 (0=星期一, 6=星期日)。
 
         Returns:
-            Date of the last weekday.
+            最后工作日的日期。
         """
         # Get the last day of the month
         last_day = DateUtils.get_month_end(f"{year}-{month:02d}-01")
@@ -330,15 +330,15 @@ class DateUtils:
 
     @staticmethod
     def _calculate_good_friday(year: int) -> date:
-        """Calculate Good Friday for a given year.
+        """计算给定年份的耶稣受难日。
 
         Args:
-            year: Year.
+            year: 年份。
 
         Returns:
-            Good Friday date.
+            耶稣受难日日期。
         """
-        # Simplified calculation (Meeus/Jones/Butcher algorithm)
+        # 简化计算（Meeus/Jones/Butcher算法）
         a = year % 19
         b = year // 100
         c = year % 100

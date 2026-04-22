@@ -1,4 +1,4 @@
-"""Performance metrics calculation for trading strategies."""
+"""交易策略性能指标计算。"""
 
 from typing import Dict, Any, Optional, Tuple
 import pandas as pd
@@ -15,18 +15,18 @@ def calculate_metrics(
     risk_free_rate: float = 0.02,
     frequency: str = "daily",
 ) -> Dict[str, float]:
-    """Calculate comprehensive performance metrics.
+    """计算全面的性能指标。
     
     Args:
-        returns: Strategy returns series.
-        equity_curve: Equity curve series.
-        drawdown: Drawdown series.
-        initial_capital: Initial capital.
-        risk_free_rate: Annual risk-free rate.
-        frequency: Data frequency ('daily', 'weekly', 'monthly').
+        returns: 策略收益序列。
+        equity_curve: 权益曲线序列。
+        drawdown: 回撤序列。
+        initial_capital: 初始资金。
+        risk_free_rate: 年化无风险利率。
+        frequency: 数据频率（'daily', 'weekly', 'monthly'）。
         
     Returns:
-        Dictionary with performance metrics.
+        包含性能指标的字典。
     """
     if len(returns) < 2:
         return _empty_metrics()

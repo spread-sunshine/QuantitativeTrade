@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Example script demonstrating trading strategies.
+示例脚本演示交易策略。
 
-This script shows how to:
-1. Load market data
-2. Create and configure trading strategies
-3. Generate trading signals
-4. Run backtests
-5. Analyze results
+此脚本展示如何：
+1. 加载市场数据
+2. 创建和配置交易策略
+3. 生成交易信号
+4. 运行回测
+5. 分析结果
 """
 
 import sys
@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-# Add project root to path
+# 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -28,24 +28,24 @@ from src.strategies.breakout import BreakoutStrategy
 from src.visualization.charts import create_equity_curve, create_drawdown_chart
 from src.utils.logger import setup_logger
 
-# Setup logger
+# 设置日志记录器
 logger = setup_logger("strategy_demo")
 
 def load_sample_data():
-    """Load sample market data for demonstration."""
+    """加载示例市场数据用于演示。"""
     logger.info("Loading sample market data...")
     
-    # Create sample data if needed
+    # 如果需要，创建示例数据
     dates = pd.date_range(start='2020-01-01', end='2023-12-31', freq='B')
     n = len(dates)
     
-    # Generate synthetic price data with trend and noise
+    # 生成带有趋势和噪声的合成价格数据
     np.random.seed(42)
     trend = np.linspace(100, 200, n)
     noise = np.random.normal(0, 5, n)
     prices = trend + noise + 10 * np.sin(np.linspace(0, 10 * np.pi, n))
     
-    # Create DataFrame
+    # 创建DataFrame
     data = pd.DataFrame({
         'open': prices * 0.99,
         'high': prices * 1.02,
@@ -58,12 +58,12 @@ def load_sample_data():
     return data
 
 def demo_moving_average_crossover(data):
-    """Demonstrate moving average crossover strategy."""
+    """演示移动平均线交叉策略。"""
     logger.info("\n" + "="*60)
     logger.info("Moving Average Crossover Strategy Demo")
     logger.info("="*60)
     
-    # Create strategy
+    # 创建策略
     strategy = MovingAverageCrossover(
         short_window=20,
         long_window=50,
@@ -73,13 +73,13 @@ def demo_moving_average_crossover(data):
         slippage=0.0001
     )
     
-    # Generate signals
+    # 生成信号
     signals = strategy.generate_signals(data)
     
-    # Run backtest
+    # 运行回测
     results = strategy.run_backtest(data)
     
-    # Display results
+    # 显示结果
     logger.info(f"\nStrategy: {results['strategy_name']}")
     logger.info(f"Total Return: {results['total_return']:.2%}")
     logger.info(f"Annualized Return: {results.get('annualized_return', 0):.2%}")
@@ -89,7 +89,7 @@ def demo_moving_average_crossover(data):
     logger.info(f"Max Drawdown: {results['max_drawdown']:.2%}")
     logger.info(f"Number of Trades: {results['num_trades']:.0f}")
     
-    # Show signal statistics
+    # 显示信号统计
     signal_stats = signals['signal'].value_counts()
     logger.info(f"\nSignal Statistics:")
     for signal, count in signal_stats.items():
@@ -99,12 +99,12 @@ def demo_moving_average_crossover(data):
     return strategy, signals, results
 
 def demo_mean_reversion(data):
-    """Demonstrate mean reversion strategy."""
+    """演示均值回归策略。"""
     logger.info("\n" + "="*60)
     logger.info("Mean Reversion Strategy Demo")
     logger.info("="*60)
     
-    # Create strategy
+    # 创建策略
     strategy = MeanReversion(
         window=20,
         num_std=2.0,
@@ -117,13 +117,13 @@ def demo_mean_reversion(data):
         slippage=0.0001
     )
     
-    # Generate signals
+    # 生成信号
     signals = strategy.generate_signals(data)
     
-    # Run backtest
+    # 运行回测
     results = strategy.run_backtest(data)
     
-    # Display results
+    # 显示结果
     logger.info(f"\nStrategy: {results['strategy_name']}")
     logger.info(f"Total Return: {results['total_return']:.2%}")
     logger.info(f"Annualized Return: {results.get('annualized_return', 0):.2%}")
@@ -133,7 +133,7 @@ def demo_mean_reversion(data):
     logger.info(f"Max Drawdown: {results['max_drawdown']:.2%}")
     logger.info(f"Number of Trades: {results['num_trades']:.0f}")
     
-    # Show RSI statistics
+    # 显示RSI统计
     if 'rsi' in signals.columns:
         rsi_stats = signals['rsi'].describe()
         logger.info(f"\nRSI Statistics:")
@@ -146,12 +146,12 @@ def demo_mean_reversion(data):
     return strategy, signals, results
 
 def demo_breakout_strategy(data):
-    """Demonstrate breakout strategy."""
+    """演示突破策略。"""
     logger.info("\n" + "="*60)
     logger.info("Breakout Strategy Demo")
     logger.info("="*60)
     
-    # Create strategy
+    # 创建策略
     strategy = BreakoutStrategy(
         lookback_period=20,
         atr_period=14,
@@ -164,13 +164,13 @@ def demo_breakout_strategy(data):
         slippage=0.0001
     )
     
-    # Generate signals
+    # 生成信号
     signals = strategy.generate_signals(data)
     
-    # Run backtest
+    # 运行回测
     results = strategy.run_backtest(data)
     
-    # Display results
+    # 显示结果
     logger.info(f"\nStrategy: {results['strategy_name']}")
     logger.info(f"Total Return: {results['total_return']:.2%}")
     logger.info(f"Annualized Return: {results.get('annualized_return', 0):.2%}")
@@ -180,7 +180,7 @@ def demo_breakout_strategy(data):
     logger.info(f"Max Drawdown: {results['max_drawdown']:.2%}")
     logger.info(f"Number of Trades: {results['num_trades']:.0f}")
     
-    # Show breakout statistics
+    # 显示突破统计
     if 'is_consolidating' in signals.columns:
         consolidation_stats = signals['is_consolidating'].value_counts()
         logger.info(f"\nConsolidation Statistics:")
@@ -191,7 +191,7 @@ def demo_breakout_strategy(data):
     return strategy, signals, results
 
 def compare_strategies(strategy_results):
-    """Compare performance of multiple strategies."""
+    """比较多个策略的性能。"""
     logger.info("\n" + "="*60)
     logger.info("Strategy Comparison")
     logger.info("="*60)
@@ -209,11 +209,11 @@ def compare_strategies(strategy_results):
             'Max Drawdown': results['max_drawdown'],
             'Number of Trades': results['num_trades'],
         })
-    
-    # Create comparison DataFrame
+
+    # 创建比较DataFrame
     comparison_df = pd.DataFrame(comparison_data)
     
-    # Display comparison
+    # 显示比较
     logger.info("\nPerformance Comparison:")
     for _, row in comparison_df.iterrows():
         logger.info(f"\n{row['Strategy']}:")
@@ -222,62 +222,62 @@ def compare_strategies(strategy_results):
         logger.info(f"  Max Drawdown: {row['Max Drawdown']:.2%}")
         logger.info(f"  Win Rate: {row['Win Rate']:.2%}")
     
-    # Find best strategy by Sharpe ratio
+    # 按夏普比率寻找最佳策略
     best_sharpe = comparison_df.loc[comparison_df['Sharpe Ratio'].idxmax()]
     logger.info(f"\nBest Strategy by Sharpe Ratio: {best_sharpe['Strategy']} ({best_sharpe['Sharpe Ratio']:.2f})")
     
-    # Find best strategy by total return
+    # 按总收益寻找最佳策略
     best_return = comparison_df.loc[comparison_df['Total Return'].idxmax()]
     logger.info(f"Best Strategy by Total Return: {best_return['Strategy']} ({best_return['Total Return']:.2%})")
     
-    # Find best strategy by max drawdown (least negative)
-    best_drawdown = comparison_df.loc[comparison_df['Max Drawdown'].idxmax()]  # idxmax because drawdown is negative
+    # 按最大回撤（最小负值）寻找最佳策略
+    best_drawdown = comparison_df.loc[comparison_df['Max Drawdown'].idxmax()]  # idxmax是因为回撤为负值
     logger.info(f"Best Strategy by Max Drawdown: {best_drawdown['Strategy']} ({best_drawdown['Max Drawdown']:.2%})")
     
     return comparison_df
 
 def main():
-    """Main demonstration function."""
+    """主演示函数。"""
     logger.info("Starting trading strategy demonstration")
     
-    # Load or create sample data
+    # 加载或创建示例数据
     data = load_sample_data()
     
-    # Run strategy demos
+    # 运行策略演示
     strategy_results = {}
     
-    # Moving Average Crossover
+    # 移动平均线交叉
     ma_strategy, ma_signals, ma_results = demo_moving_average_crossover(data)
     strategy_results['MA Crossover'] = ma_results
     
-    # Mean Reversion
+    # 均值回归
     mr_strategy, mr_signals, mr_results = demo_mean_reversion(data)
     strategy_results['Mean Reversion'] = mr_results
     
-    # Breakout Strategy
+    # 突破策略
     br_strategy, br_signals, br_results = demo_breakout_strategy(data)
     strategy_results['Breakout'] = br_results
     
-    # Compare strategies
+    # 比较策略
     comparison_df = compare_strategies(strategy_results)
     
-    # Save results for visualization
+    # 保存结果用于可视化
     output_dir = project_root / "backtest_results"
     output_dir.mkdir(exist_ok=True)
     
-    # Save comparison table
+    # 保存比较表格
     comparison_file = output_dir / "strategy_comparison.csv"
     comparison_df.to_csv(comparison_file, index=False)
     logger.info(f"\nComparison table saved to: {comparison_file}")
     
-    # Save individual strategy results
+    # 保存单个策略结果
     for strategy_name, results in strategy_results.items():
-        # Save equity curve
+        # 保存权益曲线
         if 'equity_curve' in results and not results['equity_curve'].empty:
             equity_file = output_dir / f"{strategy_name.replace(' ', '_')}_equity.csv"
             results['equity_curve'].to_csv(equity_file)
             
-        # Save signals
+        # 保存信号
         if 'signals' in results and not results['signals'].empty:
             signals_file = output_dir / f"{strategy_name.replace(' ', '_')}_signals.csv"
             results['signals'].to_csv(signals_file)
@@ -285,7 +285,7 @@ def main():
     logger.info("\nStrategy demonstration completed successfully!")
     logger.info(f"Results saved to: {output_dir}")
     
-    # Display next steps
+    # 显示后续步骤
     logger.info("\n" + "="*60)
     logger.info("Next Steps:")
     logger.info("1. Run real data backtests using examples/data_pipeline.py")

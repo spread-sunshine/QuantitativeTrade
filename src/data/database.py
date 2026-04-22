@@ -1,4 +1,4 @@
-# Database manager for storing and retrieving market data
+# 数据库管理器，用于存储和检索市场数据
 import pandas as pd
 from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -17,7 +17,7 @@ Base = declarative_base()
 
 
 class MarketData(Base):
-    """Market data table schema."""
+    """市场数据表结构。"""
 
     __tablename__ = "market_data"
 
@@ -31,55 +31,55 @@ class MarketData(Base):
     volume = Column(Float)
     adj_close = Column(Float, nullable=True)
 
-    # Add unique constraint
+    # 添加唯一约束
     __table_args__ = (
         UniqueConstraint('symbol', 'date', name='uq_market_data_symbol_date'),
     )
 
 
 class DatabaseManager:
-    """Manages database operations for market data."""
+    """管理市场数据的数据库操作。"""
 
     def __init__(self, database_url: str = DATABASE_URL):
-        """Initialize database manager.
+        """初始化数据库管理器。
 
         Args:
-            database_url: SQLAlchemy database URL.
+            database_url: SQLAlchemy数据库URL。
         """
         self.database_url = database_url
         self.engine = create_engine(database_url, echo=False)
         self.Session = scoped_session(sessionmaker(bind=self.engine))
 
-        # Create tables if they don't exist
+        # 如果表不存在，则创建它们
         self._create_tables()
 
     def _create_tables(self):
-        """Create database tables if they don't exist."""
+        """如果数据库表不存在，则创建它们。"""
         Base.metadata.create_all(self.engine)
         logger.info(f"Database tables created/verified at {self.database_url}")
 
     def store_data(self, df: pd.DataFrame, symbol: str, if_exists: str = "append"):
-        """Store market data in database.
+        """将市场数据存储到数据库中。
 
         Args:
-            df: DataFrame with market data.
-            symbol: Stock symbol.
-            if_exists: What to do if data exists ('fail', 'replace', 'append').
+            df: 包含市场数据的DataFrame。
+            symbol: 股票代码。
+            if_exists: 如果数据已存在时的处理方式（'fail'、'replace'、'append'）。
         """
         if df.empty:
             logger.warning(f"No data to store for {symbol}")
             return
 
-        # Ensure required columns exist
+        # 确保必需的列存在
         required_columns = ["open", "high", "low", "close", "volume"]
         for col in required_columns:
             if col not in df.columns:
                 raise ValueError(f"DataFrame missing required column: {col}")
 
-        # Prepare DataFrame for database
+        # 为数据库准备DataFrame
         db_df = df.copy()
 
-        # Ensure date column is datetime
+        # 确保日期列是datetime类型
         if "date" in db_df.columns:
             db_df["date"] = pd.to_datetime(db_df["date"])
         elif "Date" in db_df.columns:
@@ -92,11 +92,11 @@ class DatabaseManager:
         else:
             raise ValueError("DataFrame must have a date column or index")
 
-        # Add symbol if not present
+        # 如果不存在，则添加股票代码列
         if "symbol" not in db_df.columns:
             db_df["symbol"] = symbol
 
-        # Rename columns to match database schema
+        # 重命名列以匹配数据库模式
         column_mapping = {
             "open": "open",
             "high": "high",
@@ -112,11 +112,11 @@ class DatabaseManager:
             if old_col in db_df.columns and new_col not in db_df.columns:
                 db_df[new_col] = db_df[old_col]
 
-        # Select only columns that exist in the table
+        # 仅选择表中存在的列
         table_columns = [col.name for col in MarketData.__table__.columns]
         db_df = db_df[[col for col in db_df.columns if col in table_columns]]
 
-        # Store in database
+        # 存储到数据库
         try:
             db_df.to_sql(
                 MarketData.__tablename__,
@@ -137,16 +137,16 @@ class DatabaseManager:
         end_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Retrieve market data from database.
+        """从数据库检索市场数据。
 
         Args:
-            symbol: Stock symbol.
-            start_date: Start date in 'YYYY-MM-DD' format.
-            end_date: End date in 'YYYY-MM-DD' format.
-            limit: Maximum number of rows to return.
+            symbol: 股票代码。
+            start_date: 开始日期，格式为'YYYY-MM-DD'。
+            end_date: 结束日期，格式为'YYYY-MM-DD'。
+            limit: 返回的最大行数。
 
         Returns:
-            DataFrame with market data.
+            包含市场数据的DataFrame。
         """
         session = self.Session()
 
@@ -204,15 +204,15 @@ class DatabaseManager:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> Dict[str, pd.DataFrame]:
-        """Retrieve data for multiple symbols.
+        """检索多个股票代码的数据。
 
         Args:
-            symbols: List of stock symbols.
-            start_date: Start date.
-            end_date: End date.
+            symbols: 股票代码列表。
+            start_date: 开始日期。
+            end_date: 结束日期。
 
         Returns:
-            Dictionary mapping symbol to DataFrame.
+            映射股票代码到DataFrame的字典。
         """
         data = {}
         for symbol in symbols:
@@ -227,10 +227,10 @@ class DatabaseManager:
         return data
 
     def get_available_symbols(self) -> List[str]:
-        """Get list of symbols available in database.
+        """获取数据库中可用的股票代码列表。
 
         Returns:
-            List of symbols.
+            股票代码列表。
         """
         session = self.Session()
 
@@ -249,13 +249,13 @@ class DatabaseManager:
             session.close()
 
     def get_date_range(self, symbol: str) -> Dict[str, Any]:
-        """Get date range for a symbol in database.
+        """获取数据库中某个股票代码的日期范围。
 
         Args:
-            symbol: Stock symbol.
+            symbol: 股票代码。
 
         Returns:
-            Dictionary with min_date, max_date, and row_count.
+            包含最小日期、最大日期和行数的字典。
         """
         session = self.Session()
 
@@ -301,13 +301,13 @@ class DatabaseManager:
             session.close()
 
     def delete_symbol(self, symbol: str) -> int:
-        """Delete all data for a symbol.
+        """删除某个股票代码的所有数据。
 
         Args:
-            symbol: Stock symbol.
+            symbol: 股票代码。
 
         Returns:
-            Number of rows deleted.
+            删除的行数。
         """
         session = self.Session()
 
@@ -324,13 +324,13 @@ class DatabaseManager:
             session.close()
 
     def cleanup_old_data(self, days_to_keep: int = 365 * 5) -> int:
-        """Delete data older than specified number of days.
+        """删除早于指定天数的数据。
 
         Args:
-            days_to_keep: Number of days of data to keep.
+            days_to_keep: 要保留的数据天数。
 
         Returns:
-            Number of rows deleted.
+            删除的行数。
         """
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)
         session = self.Session()
@@ -352,10 +352,10 @@ class DatabaseManager:
             session.close()
 
     def get_database_info(self) -> Dict[str, Any]:
-        """Get database information.
+        """获取数据库信息。
 
         Returns:
-            Dictionary with database information.
+            包含数据库信息的字典。
         """
         inspector = inspect(self.engine)
         tables = inspector.get_table_names()

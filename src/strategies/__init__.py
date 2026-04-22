@@ -1,4 +1,4 @@
-# Trading strategies module
+# 交易策略模块
 
 from .base import BaseStrategy
 from .moving_average import MovingAverageCrossover

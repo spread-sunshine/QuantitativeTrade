@@ -1,4 +1,4 @@
-"""Position sizing algorithms for risk management."""
+"""用于风险管理的仓位规模算法。"""
 
 from typing import Dict, Any, Optional, Tuple
 import numpy as np
@@ -12,27 +12,27 @@ logger = setup_logger(__name__)
 
 
 class PositionSizingMethod(Enum):
-    """Position sizing methods."""
-    FIXED_FRACTIONAL = "fixed_fractional"  # Fixed percentage of capital
-    KELLY_CRITERION = "kelly_criterion"    # Kelly criterion
-    VOLATILITY_ADJUSTED = "volatility_adjusted"  # Adjust for volatility
-    OPTIMAL_F = "optimal_f"                # Optimal f (Ralph Vince)
-    EQUAL_WEIGHT = "equal_weight"          # Equal weighting
-    RISK_PARITY = "risk_parity"            # Risk parity weighting
-    BLACK_LITTERMAN = "black_litterman"    # Black-Litterman model
+    """仓位规模方法。"""
+    FIXED_FRACTIONAL = "fixed_fractional"  # 固定资金比例
+    KELLY_CRITERION = "kelly_criterion"    # 凯利公式
+    VOLATILITY_ADJUSTED = "volatility_adjusted"  # 根据波动率调整
+    OPTIMAL_F = "optimal_f"                # 最优 f (Ralph Vince)
+    EQUAL_WEIGHT = "equal_weight"          # 等权重
+    RISK_PARITY = "risk_parity"            # 风险平价权重
+    BLACK_LITTERMAN = "black_litterman"    # 布莱克-利特曼模型
 
 
 class PositionSizer:
-    """Position sizing calculator with multiple algorithms.
+    """多算法仓位规模计算器。
     
-    Implements various position sizing strategies:
-    - Fixed fractional sizing
-    - Kelly criterion
-    - Volatility-adjusted sizing
-    - Optimal f
-    - Equal weighting
-    - Risk parity
-    - Black-Litterman
+    实现多种仓位规模策略：
+    - 固定分数规模
+    - 凯利公式
+    - 波动率调整规模
+    - 最优 f
+    - 等权重
+    - 风险平价
+    - 布莱克-利特曼模型
     """
     
     def __init__(
@@ -44,15 +44,15 @@ class PositionSizer:
         volatility_lookback: int = 20,
         risk_free_rate: float = 0.02,
     ):
-        """Initialize position sizer.
+        """初始化仓位规模计算器。
         
-        Args:
-            method: Position sizing method.
-            max_position_pct: Maximum position size as percentage of portfolio.
-            max_portfolio_risk: Maximum risk per trade as percentage of portfolio.
-            kelly_fraction: Fraction of full Kelly to use (0.5 = half Kelly).
-            volatility_lookback: Lookback period for volatility calculation.
-            risk_free_rate: Annual risk-free rate.
+        参数：
+            method: 仓位规模方法。
+            max_position_pct: 最大仓位占投资组合的百分比。
+            max_portfolio_risk: 每笔交易最大风险占投资组合的百分比。
+            kelly_fraction: 使用的凯利公式比例（0.5 表示半凯利）。
+            volatility_lookback: 波动率计算的回溯期。
+            risk_free_rate: 年化无风险利率。
         """
         self.method = method
         self.max_position_pct = max_position_pct
@@ -84,22 +84,22 @@ class PositionSizer:
         avg_loss: Optional[float] = None,
         confidence: float = 0.95,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Calculate position size using selected method.
+        """使用选定方法计算仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current market price.
-            portfolio_value: Total portfolio value.
-            stop_loss_price: Stop loss price (optional).
-            expected_return: Expected return (annualized).
-            volatility: Expected volatility (annualized).
-            win_rate: Historical win rate (0-1).
-            avg_win: Average win percentage.
-            avg_loss: Average loss percentage.
-            confidence: Confidence level for calculations.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前市场价格。
+            portfolio_value: 投资组合总价值。
+            stop_loss_price: 止损价格（可选）。
+            expected_return: 预期收益率（年化）。
+            volatility: 预期波动率（年化）。
+            win_rate: 历史胜率（0-1）。
+            avg_win: 平均盈利百分比。
+            avg_loss: 平均亏损百分比。
+            confidence: 计算置信水平。
             
-        Returns:
-            Tuple of (position_size, position_value, calculation_details).
+        返回：
+            元组 (仓位规模, 仓位价值, 计算详情)。
         """
         if portfolio_value <= 0:
             return 0.0, 0.0, {"error": "Portfolio value must be positive"}
@@ -185,11 +185,11 @@ class PositionSizer:
         symbol: str,
         returns: pd.Series,
     ) -> None:
-        """Update returns history for a symbol.
+        """更新标的的收益历史。
         
-        Args:
-            symbol: Trading symbol.
-            returns: Returns series.
+        参数：
+            symbol: 交易标的。
+            returns: 收益序列。
         """
         self.returns_history[symbol] = returns.copy()
         
@@ -208,16 +208,16 @@ class PositionSizer:
         portfolio_value: float,
         stop_loss_price: Optional[float] = None,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Fixed fractional position sizing.
+        """固定分数仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            stop_loss_price: Stop loss price.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            stop_loss_price: 止损价格。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Calculate based on risk per trade
         if stop_loss_price is not None:
@@ -251,18 +251,18 @@ class PositionSizer:
         avg_win: Optional[float] = None,
         avg_loss: Optional[float] = None,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Kelly criterion position sizing.
+        """凯利公式仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            win_rate: Win probability (0-1).
-            avg_win: Average win amount (as fraction of bet).
-            avg_loss: Average loss amount (as fraction of bet).
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            win_rate: 胜率（0-1）。
+            avg_win: 平均盈利金额（占投注比例）。
+            avg_loss: 平均亏损金额（占投注比例）。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Default values if not provided
         if win_rate is None:
@@ -314,16 +314,16 @@ class PositionSizer:
         portfolio_value: float,
         volatility: Optional[float] = None,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Volatility-adjusted position sizing.
+        """波动率调整仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            volatility: Annualized volatility.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            volatility: 年化波动率。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Get volatility if not provided
         if volatility is None:
@@ -363,18 +363,18 @@ class PositionSizer:
         avg_win: Optional[float] = None,
         avg_loss: Optional[float] = None,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Optimal f position sizing (Ralph Vince).
+        """最优 f 仓位规模（Ralph Vince）。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            win_rate: Win probability.
-            avg_win: Average win.
-            avg_loss: Average loss.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            win_rate: 胜率。
+            avg_win: 平均盈利。
+            avg_loss: 平均亏损。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Default values
         if win_rate is None:
@@ -428,15 +428,15 @@ class PositionSizer:
         current_price: float,
         portfolio_value: float,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Equal weight position sizing.
+        """等权重仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Equal weight across all positions
         # For simplicity, assume we want 10 positions
@@ -465,16 +465,16 @@ class PositionSizer:
         portfolio_value: float,
         volatility: Optional[float] = None,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Risk parity position sizing.
+        """风险平价仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            volatility: Asset volatility.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            volatility: 资产波动率。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Get volatility if not provided
         if volatility is None:
@@ -521,18 +521,18 @@ class PositionSizer:
         volatility: Optional[float] = None,
         confidence: float = 0.95,
     ) -> Tuple[float, float, Dict[str, Any]]:
-        """Black-Litterman model for position sizing.
+        """布莱克-利特曼模型仓位规模。
         
-        Args:
-            symbol: Trading symbol.
-            current_price: Current price.
-            portfolio_value: Portfolio value.
-            expected_return: Expected return.
-            volatility: Asset volatility.
-            confidence: Confidence in views.
+        参数：
+            symbol: 交易标的。
+            current_price: 当前价格。
+            portfolio_value: 投资组合价值。
+            expected_return: 预期收益率。
+            volatility: 资产波动率。
+            confidence: 观点置信度。
             
-        Returns:
-            Tuple of (size, value, details).
+        返回：
+            元组 (规模, 价值, 详情)。
         """
         # Get expected return and volatility if not provided
         if expected_return is None:
@@ -601,13 +601,13 @@ class PositionSizer:
         return size, value, details
     
     def _get_volatility(self, symbol: str) -> Optional[float]:
-        """Get volatility for a symbol.
+        """获取标的波动率。
         
-        Args:
-            symbol: Trading symbol.
+        参数：
+            symbol: 交易标的。
             
-        Returns:
-            Annualized volatility or None.
+        返回：
+            年化波动率或 None。
         """
         if symbol in self.volatility_history:
             return self.volatility_history[symbol]
@@ -624,13 +624,13 @@ class PositionSizer:
         return None
     
     def _get_expected_return(self, symbol: str) -> Optional[float]:
-        """Get expected return for a symbol.
+        """获取标的预期收益率。
         
-        Args:
-            symbol: Trading symbol.
+        参数：
+            symbol: 交易标的。
             
-        Returns:
-            Expected annualized return or None.
+        返回：
+            预期年化收益率或 None。
         """
         if symbol in self.returns_history:
             returns = self.returns_history[symbol]
@@ -642,10 +642,10 @@ class PositionSizer:
         return None
     
     def _get_average_volatility(self) -> Optional[float]:
-        """Get average volatility across all symbols.
+        """获取所有标的的平均波动率。
         
-        Returns:
-            Average annualized volatility or None.
+        返回：
+            平均年化波动率或 None。
         """
         if not self.volatility_history:
             return None
@@ -654,7 +654,7 @@ class PositionSizer:
         return np.mean(volatilities)
     
     def _update_correlation_matrix(self) -> None:
-        """Update correlation matrix from returns history."""
+        """根据收益历史更新相关性矩阵。"""
         if len(self.returns_history) < 2:
             return
         
@@ -667,10 +667,10 @@ class PositionSizer:
         logger.debug("Correlation matrix updated")
     
     def get_method_description(self) -> str:
-        """Get description of current position sizing method.
+        """获取当前仓位规模方法的描述。
         
-        Returns:
-            Method description.
+        返回：
+            方法描述。
         """
         descriptions = {
             PositionSizingMethod.FIXED_FRACTIONAL: (

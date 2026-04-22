@@ -1,4 +1,4 @@
-# Breakout strategies
+# 突破策略
 import pandas as pd
 import numpy as np
 from typing import Optional, Dict, Any
@@ -10,11 +10,11 @@ logger = setup_logger(__name__)
 
 
 class BreakoutStrategy(BaseStrategy):
-    """Breakout strategy based on price channels.
+    """基于价格通道的突破策略。
 
-    This strategy identifies breakouts from consolidation patterns.
-    Buy when price breaks above resistance (bullish breakout).
-    Sell when price breaks below support (bearish breakout).
+    此策略识别盘整形态的突破。
+    当价格突破阻力位时买入（看涨突破）。
+    当价格跌破支撑位时卖出（看跌突破）。
     """
 
     def __init__(
@@ -29,18 +29,18 @@ class BreakoutStrategy(BaseStrategy):
         commission: float = 0.001,
         slippage: float = 0.0001,
     ):
-        """Initialize breakout strategy.
+        """初始化突破策略。
 
         Args:
-            lookback_period: Period for calculating support/resistance.
-            atr_period: Period for Average True Range calculation.
-            atr_multiplier: Multiplier for ATR-based stop loss.
-            consolidation_period: Minimum consolidation period in days.
-            min_consolidation_range: Minimum price range for consolidation (as fraction).
-            name: Strategy name.
-            initial_capital: Initial capital.
-            commission: Commission rate.
-            slippage: Slippage fraction.
+            lookback_period: 计算支撑/阻力的周期。
+            atr_period: 平均真实范围计算周期。
+            atr_multiplier: 基于ATR的止损乘数。
+            consolidation_period: 最小盘整周期天数。
+            min_consolidation_range: 盘整最小价格范围（比例）。
+            name: 策略名称。
+            initial_capital: 初始资金。
+            commission: 佣金率。
+            slippage: 滑点比例。
         """
         super().__init__(name, initial_capital, commission, slippage)
         
@@ -50,7 +50,7 @@ class BreakoutStrategy(BaseStrategy):
         self.consolidation_period = consolidation_period
         self.min_consolidation_range = min_consolidation_range
         
-        # Validate parameters
+        # 验证参数
         if lookback_period <= 0:
             raise ValueError("Lookback period must be positive")
         if atr_period <= 0:
@@ -68,15 +68,15 @@ class BreakoutStrategy(BaseStrategy):
         )
 
     def calculate_atr(self, high: pd.Series, low: pd.Series, close: pd.Series) -> pd.Series:
-        """Calculate Average True Range (ATR).
+        """计算平均真实范围（ATR）。
 
         Args:
-            high: High prices.
-            low: Low prices.
-            close: Close prices.
+            high: 最高价。
+            low: 最低价。
+            close: 收盘价。
 
         Returns:
-            ATR series.
+            ATR序列。
         """
         tr1 = high - low
         tr2 = abs(high - close.shift(1))
@@ -90,38 +90,38 @@ class BreakoutStrategy(BaseStrategy):
     def calculate_support_resistance(
         self, high: pd.Series, low: pd.Series, close: pd.Series
     ) -> tuple:
-        """Calculate support and resistance levels.
+        """计算支撑和阻力位。
 
         Args:
-            high: High prices.
-            low: Low prices.
-            close: Close prices.
+            high: 最高价。
+            low: 最低价。
+            close: 收盘价。
 
         Returns:
-            Tuple of (resistance, support, is_consolidating, consolidation_range).
+            元组（阻力位, 支撑位, 是否盘整, 盘整范围）。
         """
-        # Rolling high and low
+        # 滚动最高价和最低价
         rolling_high = high.rolling(window=self.lookback_period).max()
         rolling_low = low.rolling(window=self.lookback_period).min()
         
-        # Identify consolidation periods
+        # 识别盘整周期
         price_range = (rolling_high - rolling_low) / rolling_low
         is_consolidating = price_range < self.min_consolidation_range
         
-        # Check if consolidation has lasted minimum period
+        # 检查盘整是否持续最小周期
         consolidation_count = is_consolidating.rolling(window=self.consolidation_period).sum()
         valid_consolidation = consolidation_count >= self.consolidation_period
         
         return rolling_high, rolling_low, valid_consolidation, price_range
 
     def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Generate breakout trading signals.
+        """生成突破交易信号。
 
         Args:
-            data: DataFrame with market data.
+            data: 包含市场数据的DataFrame。
 
         Returns:
-            DataFrame with signals and indicators.
+            包含信号和指标的DataFrame。
         """
         if data.empty:
             raise ValueError("Data is empty")
@@ -133,15 +133,15 @@ class BreakoutStrategy(BaseStrategy):
         
         df = data.copy()
         
-        # Calculate ATR
+        # 计算ATR
         atr = self.calculate_atr(df['high'], df['low'], df['close'])
         
-        # Calculate support/resistance levels
+        # 计算支撑/阻力位
         resistance, support, is_consolidating, consolidation_range = self.calculate_support_resistance(
             df['high'], df['low'], df['close']
         )
         
-        # Generate signals
+        # 生成信号
         signals = pd.DataFrame(index=df.index)
         signals['signal'] = 0
         signals['stop_loss'] = 0.0
@@ -282,7 +282,7 @@ class DonchianChannelBreakout(BaseStrategy):
         self.atr_period = atr_period
         self.atr_multiplier = atr_multiplier
         
-        # Validate parameters
+        # 验证参数
         if entry_period <= 0:
             raise ValueError("Entry period must be positive")
         if exit_period <= 0:
@@ -360,10 +360,10 @@ class DonchianChannelBreakout(BaseStrategy):
         # Calculate exit channels
         exit_upper, exit_lower = self.calculate_exit_channels(df['high'], df['low'])
         
-        # Calculate ATR for position sizing
+        # 计算ATR for position sizing
         atr = self.calculate_atr(df['high'], df['low'], df['close'])
         
-        # Generate signals
+        # 生成信号
         signals = pd.DataFrame(index=df.index)
         signals['signal'] = 0
         signals['position_size'] = 0.0  # Position size as fraction of capital
@@ -432,15 +432,15 @@ class DonchianChannelBreakout(BaseStrategy):
         return signals
 
     def calculate_atr(self, high: pd.Series, low: pd.Series, close: pd.Series) -> pd.Series:
-        """Calculate Average True Range (ATR).
+        """计算平均真实范围（ATR）。
 
         Args:
-            high: High prices.
-            low: Low prices.
-            close: Close prices.
+            high: 最高价。
+            low: 最低价。
+            close: 收盘价。
 
         Returns:
-            ATR series.
+            ATR序列。
         """
         tr1 = high - low
         tr2 = abs(high - close.shift(1))

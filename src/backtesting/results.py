@@ -1,4 +1,4 @@
-"""Backtest results storage and serialization."""
+"""回测结果存储和序列化。"""
 
 from typing import Dict, Any, Optional, List, Union
 import pandas as pd
@@ -10,7 +10,7 @@ import json
 
 @dataclass
 class Trade:
-    """Represents a single trade."""
+    """表示单笔交易。"""
     timestamp: pd.Timestamp
     type: str  # "BUY" or "SELL"
     price: float
@@ -23,7 +23,7 @@ class Trade:
     pnl_pct: Optional[float] = None
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert trade to dictionary."""
+        """将交易转换为字典。"""
         return {
             "timestamp": self.timestamp.isoformat(),
             "type": self.type,
@@ -39,7 +39,7 @@ class Trade:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Trade':
-        """Create trade from dictionary."""
+        """从字典创建交易。"""
         data = data.copy()
         data['timestamp'] = pd.Timestamp(data['timestamp'])
         return cls(**data)
@@ -47,7 +47,7 @@ class Trade:
 
 @dataclass
 class BacktestResults:
-    """Container for backtest results with serialization capabilities."""
+    """具有序列化能力的回测结果容器。"""
     
     # Basic information
     name: str

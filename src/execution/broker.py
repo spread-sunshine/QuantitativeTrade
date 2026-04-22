@@ -1,4 +1,4 @@
-"""Broker interface for real trading integration."""
+"""真实交易集成的经纪商接口。"""
 
 from typing import Dict, Any, Optional, List, Tuple
 from abc import ABC, abstractmethod
@@ -12,65 +12,65 @@ logger = setup_logger(__name__)
 
 
 class BrokerInterface(ABC):
-    """Abstract broker interface for real trading.
+    """真实交易的抽象经纪商接口。
     
-    This defines the interface that all broker implementations must follow.
-    Concrete implementations would connect to real brokers like:
+    定义了所有经纪商实现必须遵循的接口。
+    具体实现可以连接真实的经纪商，例如：
     - Interactive Brokers
     - Alpaca
     - TD Ameritrade
     - Robinhood
-    - etc.
+    - 等。
     """
     
     @abstractmethod
     def connect(self, **kwargs) -> bool:
-        """Connect to broker.
+        """连接到经纪商。
         
         Args:
-            **kwargs: Connection parameters (API keys, tokens, etc.)
+            **kwargs: 连接参数（API密钥、令牌等）
             
         Returns:
-            True if connection successful.
+            如果连接成功则为 True。
         """
         pass
     
     @abstractmethod
     def disconnect(self) -> bool:
-        """Disconnect from broker.
+        """断开与经纪商的连接。
         
         Returns:
-            True if disconnection successful.
+            如果断开连接成功则为 True。
         """
         pass
     
     @abstractmethod
     def get_account_info(self) -> Dict[str, Any]:
-        """Get account information.
+        """获取账户信息。
         
         Returns:
-            Dictionary with account details.
+            包含账户详情的字典。
         """
         pass
     
     @abstractmethod
     def get_positions(self) -> List[Dict[str, Any]]:
-        """Get current positions.
+        """获取当前持仓。
         
         Returns:
-            List of position dictionaries.
+            持仓字典列表。
         """
         pass
     
     @abstractmethod
     def get_orders(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get orders.
+        """获取订单。
         
         Args:
-            status: Filter by order status.
+            status: 按订单状态过滤。
             
         Returns:
-            List of order dictionaries.
+            订单字典列表。
         """
         pass
     
@@ -83,29 +83,29 @@ class BrokerInterface(ABC):
         order_type: str,
         **kwargs,
     ) -> Optional[str]:
-        """Submit an order.
+        """提交订单。
         
         Args:
-            symbol: Trading symbol.
-            side: "buy" or "sell".
-            quantity: Order quantity.
-            order_type: Order type ("market", "limit", "stop", etc.)
-            **kwargs: Additional order parameters.
+            symbol: 交易代码。
+            side: "buy" 或 "sell"。
+            quantity: 订单数量。
+            order_type: 订单类型（"market"、"limit"、"stop" 等）
+            **kwargs: 附加订单参数。
             
         Returns:
-            Order ID if successful, None otherwise.
+            如果成功则为订单 ID，否则为 None。
         """
         pass
     
     @abstractmethod
     def cancel_order(self, order_id: str) -> bool:
-        """Cancel an order.
+        """取消订单。
         
         Args:
-            order_id: Order ID to cancel.
+            order_id: 要取消的订单 ID。
             
         Returns:
-            True if cancellation successful.
+            如果取消成功则为 True。
         """
         pass
     
@@ -117,37 +117,37 @@ class BrokerInterface(ABC):
         end_date: Optional[datetime] = None,
         interval: str = "1d",
     ) -> Optional[pd.DataFrame]:
-        """Get market data.
+        """获取市场数据。
         
         Args:
-            symbol: Trading symbol.
-            start_date: Start date.
-            end_date: End date.
-            interval: Data interval ("1d", "1h", "1m", etc.)
+            symbol: 交易代码。
+            start_date: 开始日期。
+            end_date: 结束日期。
+            interval: 数据间隔（"1d"、"1h"、"1m" 等）
             
         Returns:
-            DataFrame with market data.
+            包含市场数据的 DataFrame。
         """
         pass
     
     @abstractmethod
     def get_quote(self, symbol: str) -> Optional[Dict[str, float]]:
-        """Get real-time quote.
+        """获取实时报价。
         
         Args:
-            symbol: Trading symbol.
+            symbol: 交易代码。
             
         Returns:
-            Quote dictionary with bid, ask, last price, etc.
+            包含买价、卖价、最新价等的报价字典。
         """
         pass
 
 
 class MockBroker(BrokerInterface):
-    """Mock broker for testing without real broker connection."""
+    """用于测试的模拟经纪商，无需真实经纪商连接。"""
     
     def __init__(self):
-        """Initialize mock broker."""
+        """初始化模拟经纪商。"""
         self.connected = False
         self.orders = {}
         self.positions = {}
@@ -165,52 +165,52 @@ class MockBroker(BrokerInterface):
         logger.info("MockBroker initialized")
     
     def connect(self, **kwargs) -> bool:
-        """Connect to mock broker.
+        """连接到模拟经纪商。
         
         Args:
-            **kwargs: Connection parameters (ignored).
+            **kwargs: 连接参数（被忽略）。
             
         Returns:
-            Always True for mock.
+            对于模拟经纪商，总是返回 True。
         """
         self.connected = True
         logger.info("MockBroker connected")
         return True
     
     def disconnect(self) -> bool:
-        """Disconnect from mock broker.
+        """断开与模拟经纪商的连接。
         
         Returns:
-            Always True for mock.
+            对于模拟经纪商，总是返回 True。
         """
         self.connected = False
         logger.info("MockBroker disconnected")
         return True
     
     def get_account_info(self) -> Dict[str, Any]:
-        """Get mock account information.
+        """获取模拟账户信息。
         
         Returns:
-            Dictionary with account details.
+            包含账户详情的字典。
         """
         return self.account_info.copy()
     
     def get_positions(self) -> List[Dict[str, Any]]:
-        """Get mock positions.
+        """获取模拟持仓。
         
         Returns:
-            List of position dictionaries.
+            持仓字典列表。
         """
         return list(self.positions.values())
     
     def get_orders(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get mock orders.
+        """获取模拟订单。
         
         Args:
-            status: Filter by order status.
+            status: 按订单状态过滤。
             
         Returns:
-            List of order dictionaries.
+            订单字典列表。
         """
         if status:
             return [o for o in self.orders.values() if o.get("status") == status]
@@ -224,17 +224,17 @@ class MockBroker(BrokerInterface):
         order_type: str,
         **kwargs,
     ) -> Optional[str]:
-        """Submit mock order.
+        """提交模拟订单。
         
         Args:
-            symbol: Trading symbol.
-            side: "buy" or "sell".
-            quantity: Order quantity.
-            order_type: Order type.
-            **kwargs: Additional order parameters.
+            symbol: 交易代码。
+            side: "buy" 或 "sell"。
+            quantity: 订单数量。
+            order_type: 订单类型。
+            **kwargs: 附加订单参数。
             
         Returns:
-            Mock order ID.
+            模拟订单 ID。
         """
         order_id = f"MOCK_{symbol}_{side}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
@@ -258,13 +258,13 @@ class MockBroker(BrokerInterface):
         return order_id
     
     def cancel_order(self, order_id: str) -> bool:
-        """Cancel mock order.
+        """取消模拟订单。
         
         Args:
-            order_id: Order ID to cancel.
+            order_id: 要取消的订单 ID。
             
         Returns:
-            Always True for mock.
+            对于模拟经纪商，总是返回 True。
         """
         if order_id in self.orders:
             self.orders[order_id]["status"] = "cancelled"
@@ -281,16 +281,16 @@ class MockBroker(BrokerInterface):
         end_date: Optional[datetime] = None,
         interval: str = "1d",
     ) -> Optional[pd.DataFrame]:
-        """Get mock market data.
+        """获取模拟市场数据。
         
         Args:
-            symbol: Trading symbol.
-            start_date: Start date.
-            end_date: End date.
-            interval: Data interval.
+            symbol: 交易代码。
+            start_date: 开始日期。
+            end_date: 结束日期。
+            interval: 数据间隔。
             
         Returns:
-            Mock DataFrame with market data.
+            包含模拟市场数据的 DataFrame。
         """
         # Generate mock data
         if start_date is None:
@@ -303,7 +303,7 @@ class MockBroker(BrokerInterface):
         dates = pd.date_range(start=start_date, end=end_date, freq=interval)
         
         # Generate random prices
-        np.random.seed(42)  # For reproducibility
+        np.random.seed(42)  # 为了可重现性
         n = len(dates)
         
         base_price = 100.0
@@ -324,19 +324,19 @@ class MockBroker(BrokerInterface):
         return data
     
     def get_quote(self, symbol: str) -> Optional[Dict[str, float]]:
-        """Get mock quote.
+        """获取模拟报价。
         
         Args:
-            symbol: Trading symbol.
+            symbol: 交易代码。
             
         Returns:
-            Mock quote dictionary.
+            模拟报价字典。
         """
-        # Generate random quote around $100
+        # 生成围绕 100 美元的随机报价
         import random
         
         base_price = 100.0
-        spread = 0.01  # 1% spread
+        spread = 0.01  # 1% 点差
         
         bid = base_price * (1 - spread/2)
         ask = base_price * (1 + spread/2)
@@ -358,22 +358,22 @@ class MockBroker(BrokerInterface):
         return quote
 
 
-# Factory function for creating broker instances
+# 创建经纪商实例的工厂函数
 def create_broker(
     broker_type: str = "mock",
     **kwargs,
 ) -> BrokerInterface:
-    """Create broker instance.
+    """创建经纪商实例。
     
     Args:
-        broker_type: Broker type ("mock", "alpaca", "ibkr", etc.)
-        **kwargs: Broker-specific configuration.
+        broker_type: 经纪商类型 ("mock", "alpaca", "ibkr", 等)。
+        **kwargs: 经纪商特定的配置。
         
     Returns:
-        BrokerInterface instance.
+        BrokerInterface 实例。
         
     Raises:
-        ValueError: If broker type is not supported.
+        ValueError: 如果经纪商类型不支持。
     """
     if broker_type == "mock":
         return MockBroker()

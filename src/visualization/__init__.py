@@ -1,4 +1,4 @@
-# Visualization module
+# 可视化模块
 
 from .charts import create_equity_curve, create_drawdown_chart
 from .report import generate_report

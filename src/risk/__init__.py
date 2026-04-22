@@ -1,4 +1,4 @@
-# Risk management module
+# 风险管理模块
 
 from .manager import RiskManager
 from .position_sizing import PositionSizer

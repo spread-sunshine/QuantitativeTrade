@@ -1,4 +1,4 @@
-# Retry utilities for handling transient failures
+# 重试工具：用于处理瞬时故障
 import time
 import logging
 from typing import Callable, Any, Optional, Union
@@ -14,17 +14,17 @@ def retry(
     exceptions: Union[type[Exception], tuple[type[Exception], ...]] = Exception,
     logger: Optional[logging.Logger] = None,
 ):
-    """Decorator for retrying a function on exception.
+    """异常时重试函数的装饰器。
 
     Args:
-        max_attempts: Maximum number of attempts (including first).
-        delay: Initial delay between attempts in seconds.
-        backoff: Multiplier for delay after each attempt.
-        exceptions: Exception(s) to catch and retry on.
-        logger: Logger instance for logging retries.
+        max_attempts: 最大尝试次数（包括第一次）。
+        delay: 尝试之间的初始延迟（秒）。
+        backoff: 每次尝试后延迟的乘数。
+        exceptions: 要捕获并重试的异常。
+        logger: 用于记录重试的日志记录器实例。
 
     Returns:
-        Decorated function that retries on specified exceptions.
+        在指定异常时重试的装饰函数。
     """
     if logger is None:
         logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def retry(
                     time.sleep(current_delay)
                     current_delay *= backoff
 
-            # This should never be reached due to raise in loop
+            # 由于循环中的raise，这应该永远不会到达
             raise last_exception  # type: ignore
 
         return wrapper
@@ -67,7 +67,7 @@ def retry(
 
 
 class RetryConfig:
-    """Configuration for retry behavior."""
+    """重试行为的配置。"""
 
     def __init__(
         self,
@@ -83,13 +83,13 @@ class RetryConfig:
 
 
 def retry_with_config(config: RetryConfig):
-    """Create retry decorator with configuration object.
+    """使用配置对象创建重试装饰器。
 
     Args:
-        config: RetryConfig instance.
+        config: RetryConfig实例。
 
     Returns:
-        Retry decorator.
+        重试装饰器。
     """
     return retry(
         max_attempts=config.max_attempts,
@@ -99,7 +99,7 @@ def retry_with_config(config: RetryConfig):
     )
 
 
-# Default retry configurations
+# 默认重试配置
 DEFAULT_RETRY = RetryConfig(max_attempts=3, delay=1.0, backoff=2.0)
 NETWORK_RETRY = RetryConfig(
     max_attempts=5, delay=2.0, backoff=2.0, exceptions=(ConnectionError, TimeoutError)

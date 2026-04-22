@@ -1,4 +1,4 @@
-# Cache manager for storing and retrieving data
+# 缓存管理器：用于存储和检索数据
 import pickle
 import hashlib
 import json
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class CacheManager:
-    """Manages caching of data to disk."""
+    """管理数据到磁盘的缓存。"""
 
     def __init__(self, cache_dir: Optional[Path] = None, expiry_days: int = 7):
-        """Initialize cache manager.
+        """初始化缓存管理器。
 
         Args:
-            cache_dir: Directory to store cache files. If None, uses DATA_DIR/cache.
-            expiry_days: Number of days before cache entries expire.
+            cache_dir: 存储缓存文件的目录。如果为 None，则使用 DATA_DIR/cache。
+            expiry_days: 缓存条目过期前的天数。
         """
         if cache_dir is None:
             cache_dir = DATA_DIR / "cache"
@@ -29,26 +29,26 @@ class CacheManager:
         self.expiry_days = expiry_days
 
     def _get_cache_path(self, key: str) -> Path:
-        """Get file path for a cache key.
+        """获取缓存键对应的文件路径。
 
         Args:
-            key: Cache key.
+            key: 缓存键。
 
         Returns:
-            Path to cache file.
+            缓存文件路径。
         """
-        # Create a hash of the key for filename
+        # 为文件名创建键的哈希值
         key_hash = hashlib.md5(key.encode()).hexdigest()
         return self.cache_dir / f"{key_hash}.pkl"
 
     def _is_expired(self, cache_path: Path) -> bool:
-        """Check if a cache file is expired.
+        """检查缓存文件是否已过期。
 
         Args:
-            cache_path: Path to cache file.
+            cache_path: 缓存文件路径。
 
         Returns:
-            True if expired, False otherwise.
+            如果已过期返回 True，否则返回 False。
         """
         if not cache_path.exists():
             return True
@@ -58,13 +58,13 @@ class CacheManager:
         return datetime.now() > expiry_time
 
     def get(self, key: str) -> Any:
-        """Retrieve data from cache.
+        """从缓存中检索数据。
 
         Args:
-            key: Cache key.
+            key: 缓存键。
 
         Returns:
-            Cached data, or None if not found or expired.
+            缓存的数据，如果未找到或已过期则返回 None。
         """
         cache_path = self._get_cache_path(key)
 
@@ -87,11 +87,11 @@ class CacheManager:
             return None
 
     def set(self, key: str, data: Any) -> None:
-        """Store data in cache.
+        """将数据存储到缓存中。
 
         Args:
-            key: Cache key.
-            data: Data to cache (must be pickleable).
+            key: 缓存键。
+            data: 要缓存的数据（必须可被 pickle 序列化）。
         """
         cache_path = self._get_cache_path(key)
 
@@ -103,13 +103,13 @@ class CacheManager:
             logger.error(f"Error caching data for key {key}: {e}")
 
     def delete(self, key: str) -> bool:
-        """Delete data from cache.
+        """从缓存中删除数据。
 
         Args:
-            key: Cache key.
+            key: 缓存键。
 
         Returns:
-            True if deleted, False otherwise.
+            如果删除成功返回 True，否则返回 False。
         """
         cache_path = self._get_cache_path(key)
         if cache_path.exists():
@@ -119,10 +119,10 @@ class CacheManager:
         return False
 
     def clear(self) -> int:
-        """Clear all cache entries.
+        """清除所有缓存条目。
 
         Returns:
-            Number of cache entries cleared.
+            清除的缓存条目数量。
         """
         count = 0
         for cache_file in self.cache_dir.glob("*.pkl"):
@@ -136,10 +136,10 @@ class CacheManager:
         return count
 
     def clear_expired(self) -> int:
-        """Clear expired cache entries.
+        """清除已过期的缓存条目。
 
         Returns:
-            Number of expired cache entries cleared.
+            清除的过期缓存条目数量。
         """
         count = 0
         for cache_file in self.cache_dir.glob("*.pkl"):
@@ -154,10 +154,10 @@ class CacheManager:
         return count
 
     def get_stats(self) -> dict:
-        """Get cache statistics.
+        """获取缓存统计信息。
 
         Returns:
-            Dictionary with cache statistics.
+            包含缓存统计信息的字典。
         """
         cache_files = list(self.cache_dir.glob("*.pkl"))
         total_size = sum(f.stat().st_size for f in cache_files if f.exists())

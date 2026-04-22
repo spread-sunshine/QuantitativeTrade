@@ -1,4 +1,4 @@
-# Visualization functions for trading results
+# 交易结果的可视化函数
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,10 +16,10 @@ logger = setup_logger(__name__)
 
 
 def set_plot_style(theme: str = "dark"):
-    """Set matplotlib plot style.
+    """设置 matplotlib 绘图样式。
 
-    Args:
-        theme: Plot theme ('dark' or 'light').
+    参数：
+        theme: 绘图主题（'dark' 或 'light'）。
     """
     if theme == "dark":
         plt.style.use('dark_background')
@@ -28,7 +28,7 @@ def set_plot_style(theme: str = "dark"):
         plt.style.use('seaborn-v0_8-whitegrid')
         sns.set_style("whitegrid")
     
-    # Set better default colors
+    # 设置更好的默认颜色
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
               '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colors)
@@ -42,45 +42,45 @@ def create_equity_curve(
     figsize: tuple = (12, 6),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create equity curve visualization.
+    """创建权益曲线可视化。
 
-    Args:
-        equity_curve: Strategy equity curve series.
-        benchmark: Benchmark equity curve (e.g., buy and hold).
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        equity_curve: 策略权益曲线序列。
+        benchmark: 基准权益曲线（例如买入持有）。
+        title: 图表标题。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Plot strategy equity curve
+    # 绘制策略权益曲线
     ax.plot(equity_curve.index, equity_curve.values, 
             label='Strategy', linewidth=2, color='#00ff00')
     
-    # Plot benchmark if provided
+    # 如果提供了基准，则绘制基准
     if benchmark is not None:
         ax.plot(benchmark.index, benchmark.values, 
                 label='Benchmark', linewidth=2, color='#ff7f0e', alpha=0.7)
     
-    # Formatting
+    # 格式化
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Equity ($)', fontsize=12)
     ax.legend(loc='upper left', fontsize=10)
     ax.grid(True, alpha=0.3)
     
-    # Format x-axis dates
+    # 格式化x轴日期
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
     fig.autofmt_xdate()
     
-    # Add value at last point
+    # 在最后一个点添加数值
     last_value = equity_curve.iloc[-1]
     ax.annotate(f'${last_value:,.0f}', 
                 xy=(equity_curve.index[-1], last_value),
@@ -103,48 +103,48 @@ def create_drawdown_chart(
     figsize: tuple = (12, 4),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create drawdown visualization.
+    """创建回撤可视化。
 
-    Args:
-        drawdown: Drawdown series (negative values).
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        drawdown: 回撤序列（负值）。
+        title: 图表标题。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Fill area under drawdown curve
+    # 填充回撤曲线下方的区域
     ax.fill_between(drawdown.index, drawdown.values, 0, 
                     where=drawdown.values < 0,
                     color='red', alpha=0.3, label='Drawdown')
     
-    # Plot drawdown line
+    # 绘制回撤线
     ax.plot(drawdown.index, drawdown.values, 
             color='red', linewidth=1, alpha=0.7)
     
-    # Add horizontal line at max drawdown
+    # 在最大回撤处添加水平线
     max_dd = drawdown.min()
     if not np.isnan(max_dd):
         ax.axhline(y=max_dd, color='orange', linestyle='--', 
                   linewidth=1, label=f'Max DD: {max_dd:.1%}')
     
-    # Formatting
+    # 格式化
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Drawdown', fontsize=12)
     ax.legend(loc='lower left', fontsize=10)
     ax.grid(True, alpha=0.3)
     
-    # Format y-axis as percentage
+    # 将y轴格式化为百分比
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
     
-    # Format x-axis dates
+    # 格式化x轴日期
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
     fig.autofmt_xdate()
@@ -165,23 +165,23 @@ def create_returns_distribution(
     figsize: tuple = (10, 6),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create returns distribution visualization.
+    """创建收益分布可视化。
 
-    Args:
-        returns: Strategy returns series.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        returns: 策略收益序列。
+        title: 图表标题。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
     
-    # Histogram
+    # 直方图
     ax1.hist(returns.dropna() * 100, bins=50, edgecolor='black', 
              alpha=0.7, color='#1f77b4')
     ax1.set_title('Returns Histogram', fontsize=14)
@@ -189,7 +189,7 @@ def create_returns_distribution(
     ax1.set_ylabel('Frequency', fontsize=12)
     ax1.grid(True, alpha=0.3)
     
-    # Add vertical lines for mean and median
+    # 添加均值和中位数的垂直线
     mean_return = returns.mean() * 100
     median_return = returns.median() * 100
     ax1.axvline(mean_return, color='red', linestyle='--', 
@@ -198,7 +198,7 @@ def create_returns_distribution(
                 linewidth=2, label=f'Median: {median_return:.2f}%')
     ax1.legend(fontsize=9)
     
-    # Box plot
+    # 箱线图
     ax2.boxplot(returns.dropna() * 100, vert=False, patch_artist=True,
                 boxprops=dict(facecolor='#1f77b4'))
     ax2.set_title('Returns Box Plot', fontsize=14)
@@ -206,7 +206,7 @@ def create_returns_distribution(
     ax2.set_yticks([])
     ax2.grid(True, alpha=0.3)
     
-    # Add statistics text
+    # 添加统计文本
     stats_text = (
         f'Mean: {returns.mean() * 100:.2f}%\n'
         f'Std: {returns.std() * 100:.2f}%\n'
@@ -237,43 +237,43 @@ def create_rolling_metrics(
     figsize: tuple = (12, 8),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create rolling performance metrics visualization.
+    """创建滚动性能指标可视化。
 
-    Args:
-        returns: Strategy returns series.
-        window: Rolling window size (trading days).
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        returns: 策略收益序列。
+        window: 滚动窗口大小（交易日）。
+        title: 图表标题。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
-    # Calculate rolling metrics
+    # 计算滚动指标
     rolling_mean = returns.rolling(window=window).mean() * 252 * 100  # Annualized %
     rolling_std = returns.rolling(window=window).std() * np.sqrt(252) * 100  # Annualized %
     rolling_sharpe = rolling_mean / rolling_std
     
     fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True)
     
-    # Rolling annualized return
+    # 滚动年化收益
     axes[0].plot(rolling_mean.index, rolling_mean.values, 
                  color='green', linewidth=2)
     axes[0].set_ylabel('Ann. Return (%)', fontsize=12)
     axes[0].grid(True, alpha=0.3)
     axes[0].set_title('Rolling Annualized Return', fontsize=14)
     
-    # Rolling annualized volatility
+    # 滚动年化波动率
     axes[1].plot(rolling_std.index, rolling_std.values, 
                  color='blue', linewidth=2)
     axes[1].set_ylabel('Ann. Volatility (%)', fontsize=12)
     axes[1].grid(True, alpha=0.3)
     axes[1].set_title('Rolling Annualized Volatility', fontsize=14)
     
-    # Rolling Sharpe ratio
+    # 滚动夏普比率
     axes[2].plot(rolling_sharpe.index, rolling_sharpe.values, 
                  color='purple', linewidth=2)
     axes[2].set_ylabel('Sharpe Ratio', fontsize=12)
@@ -281,7 +281,7 @@ def create_rolling_metrics(
     axes[2].grid(True, alpha=0.3)
     axes[2].set_title('Rolling Sharpe Ratio', fontsize=14)
     
-    # Format x-axis dates
+    # 格式化x轴日期
     for ax in axes:
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
         ax.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
@@ -305,18 +305,18 @@ def create_trade_analysis(
     figsize: tuple = (14, 8),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create trade analysis visualization.
+    """创建交易分析可视化。
 
-    Args:
-        signals: DataFrame with trading signals.
-        prices: Price series.
-        title: Chart title.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        signals: 包含交易信号的DataFrame。
+        prices: 价格序列。
+        title: 图表标题。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
@@ -326,12 +326,12 @@ def create_trade_analysis(
     ax1 = plt.subplot(gs[0])
     ax2 = plt.subplot(gs[1], sharex=ax1)
     
-    # Plot price with buy/sell signals
+    # 绘制价格及买卖信号
     ax1.plot(prices.index, prices.values, color='white', linewidth=1, alpha=0.7)
     ax1.set_ylabel('Price', fontsize=12)
     ax1.grid(True, alpha=0.3)
     
-    # Identify buy and sell signals
+    # 识别买卖信号
     if 'signal' in signals.columns:
         buy_signals = signals[signals['signal'] == 1]
         sell_signals = signals[signals['signal'] == -1]
@@ -350,7 +350,7 @@ def create_trade_analysis(
         
         ax1.legend(loc='upper left', fontsize=10)
     
-    # Plot position
+    # 绘制仓位
     if 'position' in signals.columns:
         ax2.fill_between(signals.index, 0, signals['position'], 
                         where=signals['position'] > 0,
@@ -365,7 +365,7 @@ def create_trade_analysis(
     ax2.set_xlabel('Date', fontsize=12)
     ax2.grid(True, alpha=0.3)
     
-    # Format x-axis dates
+    # 格式化x轴日期
     ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     ax2.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
     fig.autofmt_xdate()
@@ -386,20 +386,20 @@ def create_interactive_equity_curve(
     title: str = "Interactive Equity Curve",
     save_path: Optional[str] = None,
 ) -> go.Figure:
-    """Create interactive equity curve using Plotly.
+    """使用 Plotly 创建交互式权益曲线。
 
-    Args:
-        equity_curve: Strategy equity curve series.
-        benchmark: Benchmark equity curve.
-        title: Chart title.
-        save_path: Path to save HTML file.
+    参数：
+        equity_curve: 策略权益曲线序列。
+        benchmark: 基准权益曲线。
+        title: 图表标题。
+        save_path: 保存 HTML 文件的路径。
 
-    Returns:
-        Plotly figure.
+    返回：
+        Plotly 图像对象。
     """
     fig = go.Figure()
     
-    # Add strategy equity curve
+    # 添加策略权益曲线
     fig.add_trace(go.Scatter(
         x=equity_curve.index,
         y=equity_curve.values,
@@ -409,7 +409,7 @@ def create_interactive_equity_curve(
         hovertemplate='Date: %{x}<br>Equity: $%{y:,.0f}<extra></extra>'
     ))
     
-    # Add benchmark if provided
+    # 如果提供了基准，则添加基准
     if benchmark is not None:
         fig.add_trace(go.Scatter(
             x=benchmark.index,
@@ -420,7 +420,7 @@ def create_interactive_equity_curve(
             hovertemplate='Date: %{x}<br>Equity: $%{y:,.0f}<extra></extra>'
         ))
     
-    # Update layout
+    # 更新布局
     fig.update_layout(
         title=dict(text=title, font=dict(size=20, color='white')),
         xaxis=dict(
@@ -459,23 +459,23 @@ def create_performance_dashboard(
     figsize: tuple = (16, 10),
     theme: str = "dark",
 ) -> plt.Figure:
-    """Create comprehensive performance dashboard.
+    """创建综合性能仪表板。
 
-    Args:
-        results: Backtest results dictionary.
-        save_path: Path to save the figure.
-        figsize: Figure size.
-        theme: Plot theme.
+    参数：
+        results: 回测结果字典。
+        save_path: 保存图像的路径。
+        figsize: 图像尺寸。
+        theme: 绘图主题。
 
-    Returns:
-        Matplotlib figure.
+    返回：
+        Matplotlib 图像对象。
     """
     set_plot_style(theme)
     
     fig = plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(3, 3, hspace=0.3, wspace=0.3)
     
-    # Extract data
+    # 提取数据
     equity_curve = results.get('equity_curve')
     returns = results.get('returns')
     drawdown = results.get('drawdown')
@@ -490,7 +490,7 @@ def create_performance_dashboard(
         ax1.set_ylabel('Equity ($)', fontsize=12)
         ax1.grid(True, alpha=0.3)
     
-    # 2. Drawdown (top right)
+    # 2. 回撤（右上角）
     ax2 = plt.subplot(gs[0, 2])
     if drawdown is not None:
         ax2.fill_between(drawdown.index, drawdown.values, 0, 
@@ -503,7 +503,7 @@ def create_performance_dashboard(
         ax2.grid(True, alpha=0.3)
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
     
-    # 3. Returns Distribution (middle left)
+    # 3. 收益分布（中左）
     ax3 = plt.subplot(gs[1, 0])
     if returns is not None:
         ax3.hist(returns.dropna() * 100, bins=30, edgecolor='black', 
@@ -513,7 +513,7 @@ def create_performance_dashboard(
         ax3.set_ylabel('Frequency', fontsize=12)
         ax3.grid(True, alpha=0.3)
     
-    # 4. Cumulative Returns (middle center)
+    # 4. 累计收益（中中）
     ax4 = plt.subplot(gs[1, 1])
     if returns is not None:
         cumulative_returns = (1 + returns).cumprod() - 1
@@ -523,15 +523,15 @@ def create_performance_dashboard(
         ax4.set_ylabel('Return (%)', fontsize=12)
         ax4.grid(True, alpha=0.3)
     
-    # 5. Monthly Returns Heatmap (middle right)
+    # 5. 月度收益热力图（中右）
     ax5 = plt.subplot(gs[1, 2])
     if returns is not None:
-        # Resample to monthly returns
+        # 重采样为月度收益
         monthly_returns = returns.resample('M').apply(
             lambda x: (1 + x).prod() - 1
         )
         
-        # Create monthly returns matrix
+        # 创建月度收益矩阵
         monthly_matrix = monthly_returns.groupby(
             [monthly_returns.index.year, monthly_returns.index.month]
         ).last().unstack()
@@ -546,12 +546,12 @@ def create_performance_dashboard(
         # Add colorbar
         plt.colorbar(im, ax=ax5, label='Return (%)')
     
-    # 6. Performance Metrics Table (bottom, spans 3 columns)
+    # 6. 性能指标表（底部，跨3列）
     ax6 = plt.subplot(gs[2, :])
     ax6.axis('tight')
     ax6.axis('off')
     
-    # Create metrics table
+    # 创建指标表
     metrics_data = [
         ['Total Return', f"{results.get('total_return', 0):.2%}"],
         ['Annualized Return', f"{results.get('annualized_return', 0):.2%}"],
@@ -571,7 +571,7 @@ def create_performance_dashboard(
     table.set_fontsize(11)
     table.scale(1, 1.5)
     
-    # Style the table
+    # 设置表格样式
     for i in range(len(metrics_data) + 1):
         table[(i, 0)].set_facecolor('#2E2E2E' if theme == 'dark' else '#F0F0F0')
         table[(i, 1)].set_facecolor('#3E3E3E' if theme == 'dark' else '#F8F8F8')

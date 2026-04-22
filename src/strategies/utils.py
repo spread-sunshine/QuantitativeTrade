@@ -1,4 +1,4 @@
-# Utility functions for trading strategies
+# 交易策略实用函数
 from typing import Dict, Any, Optional
 import pandas as pd
 import numpy as np
@@ -10,14 +10,14 @@ logger = logging.getLogger(__name__)
 def create_signals_dataframe(
     index: pd.Index, initial_signal: int = 0
 ) -> pd.DataFrame:
-    """Create a standardized signals DataFrame with initial values.
+    """创建标准化的信号DataFrame，包含初始值。
 
     Args:
-        index: Index for the DataFrame (should match data index).
-        initial_signal: Initial signal value (default 0 for hold).
+        index: DataFrame的索引（应与数据索引匹配）。
+        initial_signal: 初始信号值（默认0表示持有）。
 
     Returns:
-        DataFrame with standard signal columns initialized.
+        包含标准信号列初始化的DataFrame。
     """
     signals = pd.DataFrame(index=index)
     signals['signal'] = initial_signal
@@ -28,13 +28,13 @@ def create_signals_dataframe(
 
 
 def add_signal_descriptions(signals: pd.DataFrame) -> pd.DataFrame:
-    """Add human-readable signal descriptions to signals DataFrame.
+    """向信号DataFrame添加人类可读的信号描述。
 
     Args:
-        signals: DataFrame containing 'signal' column.
+        signals: 包含'signal'列的DataFrame。
 
     Returns:
-        Updated DataFrame with 'signal_type' column.
+        更新后包含'signal_type'列的DataFrame。
     """
     signals = signals.copy()
     
@@ -52,19 +52,19 @@ def add_signal_descriptions(signals: pd.DataFrame) -> pd.DataFrame:
 def calculate_position_from_signals(
     signals: pd.Series, fill_method: str = 'ffill'
 ) -> pd.Series:
-    """Calculate position series from discrete signals.
+    """从离散信号计算头寸序列。
 
     Args:
-        signals: Series of trading signals (1, -1, 0).
-        fill_method: Method to fill hold periods ('ffill' or 'bfill').
+        signals: 交易信号序列（1, -1, 0）。
+        fill_method: 填充持有期的方法（'ffill' 或 'bfill'）。
 
     Returns:
-        Position series where hold periods are filled with last signal.
+        头寸序列，其中持有期用最后信号填充。
     """
     if fill_method not in ['ffill', 'bfill']:
         raise ValueError("fill_method must be 'ffill' or 'bfill'")
     
-    # Replace 0 with NaN for forward/backward fill
+    # 将0替换为NaN以进行前向/后向填充
     position = signals.replace(0, np.nan)
     
     if fill_method == 'ffill':
@@ -78,24 +78,24 @@ def calculate_position_from_signals(
 def validate_strategy_parameters(
     parameters: Dict[str, Any], required_params: Optional[list] = None
 ) -> None:
-    """Validate strategy parameters.
+    """验证策略参数。
 
     Args:
-        parameters: Dictionary of parameters to validate.
-        required_params: List of required parameter names.
+        parameters: 要验证的参数字典。
+        required_params: 必需参数名称列表。
 
     Raises:
-        ValueError: If any parameter validation fails.
+        ValueError: 如果任何参数验证失败。
     """
     if required_params is None:
         required_params = []
     
-    # Check required parameters
+    # 检查必需参数
     for param in required_params:
         if param not in parameters:
             raise ValueError(f"Missing required parameter: {param}")
     
-    # Validate parameter values
+    # 验证参数值
     for param, value in parameters.items():
         if param.endswith('_window') or param in ['short_window', 'long_window', 'window']:
             if not isinstance(value, (int, np.integer)):
@@ -114,29 +114,29 @@ def calculate_crossover_signals(
     series1: pd.Series, series2: pd.Series, 
     buffer_periods: int = 0
 ) -> pd.Series:
-    """Calculate crossover signals between two series.
+    """计算两个序列之间的交叉信号。
 
     Args:
-        series1: First series (e.g., short moving average).
-        series2: Second series (e.g., long moving average).
-        buffer_periods: Number of periods to require confirmation.
+        series1: 第一个序列（例如短期移动平均线）。
+        series2: 第二个序列（例如长期移动平均线）。
+        buffer_periods: 需要确认的周期数。
 
     Returns:
-        Series with signals: 1 for series1 above series2, -1 for below, 0 otherwise.
+        信号序列：1表示series1在series2之上，-1表示在下，0表示其他。
     """
     if len(series1) != len(series2):
         raise ValueError("Series must have same length")
     
-    # Calculate basic crossover
+    # 计算基本交叉
     signals = pd.Series(0, index=series1.index)
     
-    # Series1 crosses above series2
+    # Series1上穿series2
     cross_above = (series1 > series2) & (series1.shift(1) <= series2.shift(1))
     
-    # Series1 crosses below series2
+    # Series1下穿series2
     cross_below = (series1 < series2) & (series1.shift(1) >= series2.shift(1))
     
-    # Apply buffer/confirmation if requested
+    # 如果需要，应用缓冲/确认
     if buffer_periods > 0:
         for i in range(1, buffer_periods + 1):
             cross_above = cross_above & (series1.shift(-i) > series2.shift(-i))

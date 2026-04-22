@@ -1,4 +1,4 @@
-# Mean reversion strategies
+# 均值回归策略
 import pandas as pd
 import numpy as np
 from typing import Optional, Dict, Any
@@ -10,11 +10,11 @@ logger = setup_logger(__name__)
 
 
 class MeanReversion(BaseStrategy):
-    """Mean reversion strategy based on Bollinger Bands.
+    """基于布林带的均值回归策略。
 
-    This strategy assumes prices tend to revert to their mean.
-    Buy when price crosses below lower Bollinger Band (oversold).
-    Sell when price crosses above upper Bollinger Band (overbought).
+    此策略假设价格倾向于回归均值。
+    当价格跌破下布林带时买入（超卖）。
+    当价格突破上布林带时卖出（超买）。
     """
 
     def __init__(
@@ -29,18 +29,18 @@ class MeanReversion(BaseStrategy):
         commission: float = 0.001,
         slippage: float = 0.0001,
     ):
-        """Initialize mean reversion strategy.
+        """初始化均值回归策略。
 
         Args:
-            window: Window for moving average and standard deviation.
-            num_std: Number of standard deviations for Bollinger Bands.
-            rsi_period: RSI period for confirmation.
-            rsi_oversold: RSI oversold threshold.
-            rsi_overbought: RSI overbought threshold.
-            name: Strategy name.
-            initial_capital: Initial capital.
-            commission: Commission rate.
-            slippage: Slippage fraction.
+            window: 移动平均和标准差的窗口。
+            num_std: 布林带的标准差数量。
+            rsi_period: RSI确认周期。
+            rsi_oversold: RSI超卖阈值。
+            rsi_overbought: RSI超买阈值。
+            name: 策略名称。
+            initial_capital: 初始资金。
+            commission: 佣金率。
+            slippage: 滑点比例。
         """
         super().__init__(name, initial_capital, commission, slippage)
         

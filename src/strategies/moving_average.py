@@ -1,4 +1,4 @@
-# Moving average crossover strategy
+# 移动平均线交叉策略
 import pandas as pd
 import numpy as np
 from typing import Optional, Dict, Any
@@ -18,11 +18,11 @@ logger = setup_logger(__name__)
 
 
 class MovingAverageCrossover(BaseStrategy):
-    """Moving average crossover strategy.
+    """移动平均线交叉策略。
 
-    This strategy generates signals based on the crossover of two moving averages:
-    - Buy when short MA crosses above long MA (golden cross)
-    - Sell when short MA crosses below long MA (death cross)
+    此策略基于两条移动平均线的交叉生成信号：
+    - 当短期MA上穿长期MA时买入（金叉）
+    - 当短期MA下穿长期MA时卖出（死叉）
     """
 
     def __init__(
@@ -34,15 +34,15 @@ class MovingAverageCrossover(BaseStrategy):
         commission: float = 0.001,
         slippage: float = 0.0001,
     ):
-        """Initialize moving average crossover strategy.
+        """初始化移动平均线交叉策略。
 
         Args:
-            short_window: Short moving average window.
-            long_window: Long moving average window.
-            name: Strategy name.
-            initial_capital: Initial capital for backtesting.
-            commission: Commission rate per trade.
-            slippage: Slippage as fraction of price.
+            short_window: 短期移动平均线窗口。
+            long_window: 长期移动平均线窗口。
+            name: 策略名称。
+            initial_capital: 回测初始资金。
+            commission: 每笔交易佣金率。
+            slippage: 价格滑点比例。
         """
         super().__init__(name, initial_capital, commission, slippage)
         

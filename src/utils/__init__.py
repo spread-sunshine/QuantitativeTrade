@@ -1,4 +1,4 @@
-# Utilities module
+# 工具模块
 
 from .config import Config
 from .logger import setup_logger
