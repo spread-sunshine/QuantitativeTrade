@@ -3,7 +3,7 @@
 量化交易系统数据管道示例脚本。
 
 本脚本展示如何：
-1. 从Tushare获取市场数据
+1. 从Baostock获取市场数据
 2. 处理和清洗数据
 3. 将数据存储到SQLite数据库
 4. 从数据库检索数据
@@ -35,27 +35,41 @@ def main():
     db_manager = DatabaseManager()
     
     # 定义要获取的股票代码
-    symbols = ["000001", "600519", "600036"]
+    symbols = ["300548", "000037", "603688"]
     
     # 定义日期范围（例如最近30天）
     from datetime import datetime, timedelta
-    end_date = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    today = datetime.now()
+    
+    # 默认使用昨天作为结束日期，确保数据完整性
+    # 因为当天的数据可能还未完全发布或需要处理时间
+    end_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+    start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
     
     logger.info(f"Fetching data for symbols: {symbols}")
     logger.info(f"Date range: {start_date} to {end_date}")
+    logger.info(f"Current time: {today.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"Using end date: {end_date} (yesterday) to ensure complete data availability")
+    
+    # 如果您想尝试获取当天数据，请取消下面的注释
+    # end_date = today.strftime("%Y-%m-%d")  # 使用今天
+    # logger.info(f"Attempting to fetch today's data (end_date: {end_date})")
     
     # 为每个股票代码获取数据
     for symbol in symbols:
         try:
             logger.info(f"Processing {symbol}...")
             
-            # 从Tushare获取数据
-            raw_data = fetcher.fetch_tushare(
+            # 从Baostock获取数据
+            raw_data = fetcher.fetch_baostock(
                 symbol=symbol,
                 start=start_date,
                 end=end_date,
             )
+            # 清除缓存以确保获取新数据
+            if fetcher.cache_enabled:
+                cache_key = f"baostock_{symbol}_{start_date}_{end_date}"
+                fetcher.cache.delete(cache_key)
             
             logger.info(f"Fetched {len(raw_data)} rows for {symbol}")
             

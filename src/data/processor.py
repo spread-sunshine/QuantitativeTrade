@@ -44,7 +44,7 @@ class DataProcessor:
         
         # 处理缺失值
         # OHLC前向填充，成交量填零
-        ohlc_columns = ["open", "high", "low", "close", "adj_close"]
+        ohlc_columns = ["open", "high", "low", "close"]
         for col in ohlc_columns:
             if col in df_clean.columns:
                 df_clean[col] = df_clean[col].ffill()
@@ -53,7 +53,9 @@ class DataProcessor:
             df_clean["volume"] = df_clean["volume"].fillna(0)
 
         # 移除OHLC中仍有NaN的行
-        df_clean = df_clean.dropna(subset=ohlc_columns)
+        existing_ohlc = [col for col in ohlc_columns if col in df_clean.columns]
+        if existing_ohlc:
+            df_clean = df_clean.dropna(subset=existing_ohlc)
         
         # 移除重复日期（保留最后一条）
         df_clean = df_clean[~df_clean.index.duplicated(keep="last")]

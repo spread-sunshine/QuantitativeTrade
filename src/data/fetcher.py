@@ -19,6 +19,7 @@ from config.settings import (
     AKSHARE_ENABLED,
     TUSHARE_ENABLED,
     TUSHARE_TOKEN,
+    BAOSTOCK_ENABLED,
 )
 
 logger = setup_logger(__name__)
@@ -358,6 +359,135 @@ class DataFetcher:
 
         except Exception as e:
             logger.error(f"Error fetching data for {symbol} from Tushare: {e}")
+            raise
+
+    def fetch_baostock(
+        self,
+        symbol: str,
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """从Baostock获取数据。
+
+        Args:
+            symbol: 股票代码（例如 'sh.600000' 表示浦发银行）。
+                   支持格式：'sh.600000'、'sz.000001'。
+            start: 开始日期，格式为 'YYYY-MM-DD'。
+            end: 结束日期，格式为 'YYYY-MM-DD'。
+
+        Returns:
+            包含 OHLCV 数据的 DataFrame。
+
+        Raises:
+            ValueError: 如果 Baostock 获取功能被禁用。
+        """
+        if not BAOSTOCK_ENABLED:
+            raise ValueError("Baostock fetching is disabled in configuration.")
+
+        # 如果未提供，设置默认日期
+        if end is None:
+            end = datetime.now().strftime("%Y-%m-%d")
+        if start is None:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+
+        # 处理股票代码格式
+        if symbol.startswith("6"):
+            bs_symbol = f"sh.{symbol}"
+        elif symbol.startswith("0") or symbol.startswith("3"):
+            bs_symbol = f"sz.{symbol}"
+        else:
+            bs_symbol = symbol
+
+        cache_key = f"baostock_{symbol}_{start}_{end}"
+
+        # 首先检查缓存
+        if self.cache_enabled:
+            cached_data = self.cache.get(cache_key)
+            if cached_data is not None:
+                logger.info(f"Retrieved {symbol} data from cache (Baostock)")
+                return cached_data
+
+        logger.info(f"Fetching {symbol} data from Baostock ({start} to {end})")
+
+        try:
+            import baostock as bs
+
+            # 登录系统
+            lg = bs.login()
+            if lg.error_code != '0':
+                raise ValueError(f"Baostock login failed: {lg.error_msg}")
+
+            # 获取股票日线数据
+            rs = bs.query_history_k_data_plus(
+                bs_symbol,
+                "date,code,open,high,low,close,volume,amount",
+                start_date=start,
+                end_date=end,
+                frequency="d",
+                adjustflag="3"  # 复权类型，3为不复权
+            )
+
+            if rs.error_code != '0':
+                raise ValueError(f"Baostock query failed: {rs.error_msg}")
+
+            # 转换为DataFrame
+            data_list = []
+            while (rs.error_code == '0') & rs.next():
+                data_list.append(rs.get_row_data())
+
+            if not data_list:
+                raise ValueError(f"No data returned for symbol {symbol}")
+
+            df = pd.DataFrame(data_list, columns=rs.fields)
+
+            # 登出系统
+            bs.logout()
+
+            # 转换数据类型
+            numeric_columns = ["open", "high", "low", "close", "volume", "amount"]
+            for col in numeric_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            # 重命名列
+            df = df.rename(columns={
+                "date": "date",
+                "code": "temp_symbol",  # 临时列名
+                "open": "open",
+                "high": "high",
+                "low": "low",
+                "close": "close",
+                "volume": "volume",
+                "amount": "amount"
+            })
+            
+            # 使用原始符号格式，而不是Baostock的sh.000001格式
+            df["symbol"] = symbol
+            if "temp_symbol" in df.columns:
+                df = df.drop(columns=["temp_symbol"])
+
+            # 只保留需要的列
+            keep_cols = ["date", "symbol", "open", "high", "low", "close", "volume"]
+            df = df[[col for col in keep_cols if col in df.columns]]
+
+            # 转换日期
+            df["date"] = pd.to_datetime(df["date"])
+
+            # 保持原始符号格式（不要使用sh.000001格式）
+            df["symbol"] = symbol
+
+            # 按日期排序
+            df = df.sort_values("date").reset_index(drop=True)
+
+            # 缓存数据
+            if self.cache_enabled:
+                self.cache.set(cache_key, df)
+
+            logger.info(f"Successfully fetched {len(df)} rows for {symbol} from Baostock")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error fetching data for {symbol} from Baostock: {e}")
             raise
 
     def fetch_multiple_symbols(

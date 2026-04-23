@@ -23,12 +23,13 @@ REPORTS_DIR.mkdir(exist_ok=True)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/market_data.db")
 
 # 数据源配置
-YAHOO_FETCH_ENABLED = os.getenv("YAHOO_FETCH_ENABLED", "true").lower() == "true"
+YAHOO_FETCH_ENABLED = os.getenv("YAHOO_FETCH_ENABLED", "false").lower() == "true"
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", "false").lower() == "true"
-AKSHARE_ENABLED = os.getenv("AKSHARE_ENABLED", "true").lower() == "true"
-TUSHARE_ENABLED = os.getenv("TUSHARE_ENABLED", "true").lower() == "true"
+AKSHARE_ENABLED = os.getenv("AKSHARE_ENABLED", "false").lower() == "true"
+TUSHARE_ENABLED = os.getenv("TUSHARE_ENABLED", "false").lower() == "true"
 TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
+BAOSTOCK_ENABLED = os.getenv("BAOSTOCK_ENABLED", "true").lower() == "true"
 
 # 风险管理配置
 MAX_POSITION_SIZE = float(os.getenv("MAX_POSITION_SIZE", "0.1"))

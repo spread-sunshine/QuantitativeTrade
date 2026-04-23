@@ -29,7 +29,6 @@ class MarketData(Base):
     low = Column(Float)
     close = Column(Float)
     volume = Column(Float)
-    adj_close = Column(Float, nullable=True)
 
     # 添加唯一约束
     __table_args__ = (
@@ -103,18 +102,19 @@ class DatabaseManager:
             "low": "low",
             "close": "close",
             "volume": "volume",
-            "adj close": "adj_close",
-            "adj_close": "adj_close",
-            "adjclose": "adj_close",
         }
 
         for old_col, new_col in column_mapping.items():
             if old_col in db_df.columns and new_col not in db_df.columns:
                 db_df[new_col] = db_df[old_col]
 
+        # 添加缺失的id列（数据库自动生成）
+        if "id" not in db_df.columns:
+            db_df.insert(0, "id", range(len(db_df)))
+
         # 仅选择表中存在的列
-        table_columns = [col.name for col in MarketData.__table__.columns]
-        db_df = db_df[[col for col in db_df.columns if col in table_columns]]
+        table_columns = ["id", "symbol", "date", "open", "high", "low", "close", "volume"]
+        db_df = db_df[[col for col in table_columns if col in db_df.columns]]
 
         # 存储到数据库
         try:
@@ -151,7 +151,19 @@ class DatabaseManager:
         session = self.Session()
 
         try:
-            query = session.query(MarketData).filter(MarketData.symbol == symbol)
+            # 处理Baostock符号格式兼容性
+            # Baostock可能返回 sh.600036 格式，但查询时可能用 600036 格式
+            if symbol.startswith('6') and not symbol.startswith('sh.'):
+                baostock_symbol = f"sh.{symbol}"
+            elif (symbol.startswith('0') or symbol.startswith('3')) and not symbol.startswith('sz.'):
+                baostock_symbol = f"sz.{symbol}"
+            else:
+                baostock_symbol = symbol
+            
+            # 尝试两种格式查询
+            query = session.query(MarketData).filter(
+                (MarketData.symbol == symbol) | (MarketData.symbol == baostock_symbol)
+            )
 
             if start_date:
                 query = query.filter(MarketData.date >= start_date)
@@ -181,7 +193,6 @@ class DatabaseManager:
                         "low": row.low,
                         "close": row.close,
                         "volume": row.volume,
-                        "adj_close": row.adj_close,
                     }
                 )
 
