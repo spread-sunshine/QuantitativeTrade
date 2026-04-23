@@ -3,7 +3,7 @@
 量化交易系统数据管道示例脚本。
 
 本脚本展示如何：
-1. 从Yahoo Finance获取市场数据
+1. 从Tushare获取市场数据
 2. 处理和清洗数据
 3. 将数据存储到SQLite数据库
 4. 从数据库检索数据
@@ -35,7 +35,7 @@ def main():
     db_manager = DatabaseManager()
     
     # 定义要获取的股票代码
-    symbols = ["AAPL", "MSFT", "GOOGL"]
+    symbols = ["000001", "600519", "600036"]
     
     # 定义日期范围（例如最近30天）
     from datetime import datetime, timedelta
@@ -50,12 +50,11 @@ def main():
         try:
             logger.info(f"Processing {symbol}...")
             
-            # 从Yahoo Finance获取数据
-            raw_data = fetcher.fetch_yahoo(
+            # 从Tushare获取数据
+            raw_data = fetcher.fetch_tushare(
                 symbol=symbol,
                 start=start_date,
                 end=end_date,
-                interval="1d"
             )
             
             logger.info(f"Fetched {len(raw_data)} rows for {symbol}")

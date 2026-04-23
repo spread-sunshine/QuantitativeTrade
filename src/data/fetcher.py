@@ -16,6 +16,9 @@ from config.settings import (
     ALPHA_VANTAGE_ENABLED,
     USE_CACHE,
     CACHE_EXPIRY_DAYS,
+    AKSHARE_ENABLED,
+    TUSHARE_ENABLED,
+    TUSHARE_TOKEN,
 )
 
 logger = setup_logger(__name__)
@@ -67,7 +70,7 @@ class DataFetcher:
         if not YAHOO_FETCH_ENABLED:
             raise ValueError("Yahoo Finance fetching is disabled in configuration.")
 
-        # Set default dates if not provided
+        # 如果未提供，设置默认日期
         if end is None:
             end = datetime.now().strftime("%Y-%m-%d")
         if start is None:
@@ -75,7 +78,7 @@ class DataFetcher:
 
         cache_key = f"yahoo_{symbol}_{start}_{end}_{interval}"
 
-        # Check cache first
+        # 首先检查缓存
         if self.cache_enabled:
             cached_data = self.cache.get(cache_key)
             if cached_data is not None:
@@ -113,6 +116,250 @@ class DataFetcher:
             logger.error(f"Error fetching data for {symbol}: {e}")
             raise
 
+    def fetch_akshare(
+        self,
+        symbol: str,
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """从东方财富(akshare)获取数据。
+
+        Args:
+            symbol: 股票代码（例如 '000001' 表示平安银行）。
+                   支持格式：'000001'、'sh000001'、'sz000001'。
+            start: 开始日期，格式为 'YYYYMMDD' 或 'YYYY-MM-DD'。
+            end: 结束日期，格式为 'YYYYMMDD' 或 'YYYY-MM-DD'。
+
+        Returns:
+            包含 OHLCV 数据的 DataFrame。
+
+        Raises:
+            ValueError: 如果 akshare 获取功能被禁用或股票代码无效。
+        """
+        if not AKSHARE_ENABLED:
+            raise ValueError("AkShare fetching is disabled in configuration.")
+
+        # 如果未提供，设置默认日期
+        if end is None:
+            end = datetime.now().strftime("%Y%m%d")
+        if start is None:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+
+        # 处理日期格式
+        if "-" in start:
+            start = start.replace("-", "")
+        if "-" in end:
+            end = end.replace("-", "")
+
+        cache_key = f"akshare_{symbol}_{start}_{end}"
+
+        # 首先检查缓存
+        if self.cache_enabled:
+            cached_data = self.cache.get(cache_key)
+            if cached_data is not None:
+                logger.info(f"Retrieved {symbol} data from cache")
+                return cached_data
+
+        logger.info(f"Fetching {symbol} data from AkShare ({start} to {end})")
+
+        try:
+            import akshare as ak
+
+            # 判断市场代码
+            if symbol.startswith("sh") or symbol.startswith("sz"):
+                market = symbol[:2].lower()
+                code = symbol[2:]
+            else:
+                # 尝试自动判断市场
+                code = symbol
+                # 尝试获取成分股列表来判断
+                try:
+                    ak.stock_zh_a_hist(
+                        symbol=code,
+                        period="daily",
+                        start_date=start,
+                        end_date=end,
+                        adjust="qfq",
+                    )
+                    market = None
+                except Exception:
+                    # 默认假设深圳
+                    market = "sz" if code.startswith("0") or code.startswith("3") else "sh"
+
+            # 获取数据
+            df = ak.stock_zh_a_hist(
+                symbol=code,
+                period="daily",
+                start_date=start,
+                end_date=end,
+                adjust="qfq",
+            )
+
+            if df is None or df.empty:
+                raise ValueError(f"No data returned for symbol {symbol}")
+
+            # 重命名列为标准格式
+            df = df.rename(
+                columns={
+                    "日期": "date",
+                    "股票代码": "symbol",
+                    "开盘": "open",
+                    "最高": "high",
+                    "最低": "low",
+                    "收盘": "close",
+                    "成交量": "volume",
+                    "成交额": "amount",
+                    "振幅": "amplitude",
+                    "涨跌幅": "pct_change",
+                    "涨跌额": "change",
+                    "换手率": "turnover",
+                }
+            )
+
+            # 只保留需要的列
+            keep_cols = ["date", "symbol", "open", "high", "low", "close", "volume"]
+            df = df[[col for col in keep_cols if col in df.columns]]
+
+            # 转换数据类型
+            for col in ["open", "high", "low", "close", "volume"]:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            # 转换日期
+            df["date"] = pd.to_datetime(df["date"])
+
+            # 添加股票代码
+            if "symbol" not in df.columns:
+                df["symbol"] = code
+
+            # 缓存数据
+            if self.cache_enabled:
+                self.cache.set(cache_key, df)
+
+            logger.info(f"Successfully fetched {len(df)} rows for {symbol}")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error fetching data for {symbol} from AkShare: {e}")
+            raise
+
+    def fetch_tushare(
+        self,
+        symbol: str,
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """从Tushare获取数据。
+
+        Args:
+            symbol: 股票代码（例如 '000001' 表示平安银行）。
+                   支持格式：'000001'、'sh000001'、'sz000001'。
+            start: 开始日期，格式为 'YYYYMMDD' 或 'YYYY-MM-DD'。
+            end: 结束日期，格式为 'YYYYMMDD' 或 'YYYY-MM-DD'。
+
+        Returns:
+            包含 OHLCV 数据的 DataFrame。
+
+        Raises:
+            ValueError: 如果 Tushare 获取功能被禁用或股票代码无效。
+            Exception: 如果 Tushare API 调用失败。
+        """
+        if not TUSHARE_ENABLED:
+            raise ValueError("Tushare fetching is disabled in configuration.")
+
+        # 检查 token
+        if not TUSHARE_TOKEN:
+            raise ValueError("Tushare token is not configured. "
+                           "Please set TUSHARE_TOKEN in .env file.")
+
+        # 如果未提供，设置默认日期
+        if end is None:
+            end = datetime.now().strftime("%Y%m%d")
+        if start is None:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+
+        # 处理日期格式
+        if "-" in start:
+            start = start.replace("-", "")
+        if "-" in end:
+            end = end.replace("-", "")
+
+        # 处理股票代码格式
+        code = symbol
+        if symbol.startswith("sh") or symbol.startswith("sz"):
+            code = symbol[2:]
+
+        cache_key = f"tushare_{symbol}_{start}_{end}"
+
+        # 首先检查缓存
+        if self.cache_enabled:
+            cached_data = self.cache.get(cache_key)
+            if cached_data is not None:
+                logger.info(f"Retrieved {symbol} data from cache")
+                return cached_data
+
+        logger.info(f"Fetching {symbol} data from Tushare ({start} to {end})")
+
+        try:
+            import tushare as ts
+
+            # 设置 token
+            ts.set_token(TUSHARE_TOKEN)
+            pro = ts.pro_api()
+
+            # 获取数据
+            df = pro.daily(
+                ts_code=code,
+                start_date=start,
+                end_date=end,
+            )
+
+            if df is None or df.empty:
+                raise ValueError(f"No data returned for symbol {symbol}")
+
+            # 重命名列为标准格式
+            df = df.rename(
+                columns={
+                    "ts_code": "symbol",
+                    "trade_date": "date",
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "vol": "volume",
+                    "amount": "amount",
+                    "pct_chg": "pct_change",
+                    "change": "change",
+                }
+            )
+
+            # 只保留需要的列
+            keep_cols = ["date", "symbol", "open", "high", "low", "close", "volume"]
+            df = df[[col for col in keep_cols if col in df.columns]]
+
+            # 转换数据类型
+            for col in ["open", "high", "low", "close", "volume"]:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            # 转换日期
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+
+            # 按日期排序
+            df = df.sort_values("date").reset_index(drop=True)
+
+            # 缓存数据
+            if self.cache_enabled:
+                self.cache.set(cache_key, df)
+
+            logger.info(f"Successfully fetched {len(df)} rows for {symbol}")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error fetching data for {symbol} from Tushare: {e}")
+            raise
+
     def fetch_multiple_symbols(
         self,
         symbols: List[str],
@@ -136,7 +383,7 @@ class DataFetcher:
             try:
                 df = self.fetch_yahoo(symbol, start, end, interval)
                 data[symbol] = df
-                # Avoid rate limiting
+                # 避免触发速率限制
                 time.sleep(0.1)
             except Exception as e:
                 logger.warning(f"Failed to fetch {symbol}: {e}")
@@ -176,7 +423,7 @@ class DataFetcher:
 
         cache_key = f"av_{symbol}_{function}_{output_size}"
 
-        # Check cache first
+        # 首先检查缓存
         if self.cache_enabled:
             cached_data = self.cache.get(cache_key)
             if cached_data is not None:
@@ -199,7 +446,7 @@ class DataFetcher:
             response.raise_for_status()
             data = response.json()
 
-            # Parse the response based on function
+            # 根据功能解析响应
             if "Time Series (Daily)" in data:
                 time_series = data["Time Series (Daily)"]
                 df = pd.DataFrame.from_dict(time_series, orient="index")
@@ -217,13 +464,13 @@ class DataFetcher:
             else:
                 raise ValueError(f"Unexpected response format: {list(data.keys())}")
 
-            # Add symbol column
+            # 添加代码列
             df["symbol"] = symbol
 
-            # Reset index to make date a column
+            # 重置索引使日期成为列
             df = df.reset_index().rename(columns={"index": "date"})
 
-            # Cache the data
+            # 缓存数据
             if self.cache_enabled:
                 self.cache.set(cache_key, df)
 
@@ -243,14 +490,14 @@ class DataFetcher:
         Returns:
             可用的股票代码列表。
         """
-        # This is a simplified implementation
-        # In practice, you would fetch from a known list or API
+        # 这是一个简化的实现
+        # 实际中，您会从已知列表或API获取
         from config.settings import DEFAULT_SYMBOLS
 
         if source == "yahoo":
             return DEFAULT_SYMBOLS
         elif source == "alpha_vantage":
-            # Alpha Vantage doesn't provide a symbol list API for free tier
+            # Alpha Vantage免费版不提供股票代码列表API
             return DEFAULT_SYMBOLS
         else:
             raise ValueError(f"Unknown source: {source}")
@@ -268,11 +515,11 @@ class DataFetcher:
         try:
             if source == "yahoo":
                 ticker = yf.Ticker(symbol)
-                # Try to get some basic info
+                # 尝试获取基本信息
                 info = ticker.info
                 return info is not None and len(info) > 0
             elif source == "alpha_vantage":
-                # Try to fetch a small amount of data
+                # 尝试获取少量数据
                 df = self.fetch_alpha_vantage(symbol, output_size="compact")
                 return not df.empty
             else:

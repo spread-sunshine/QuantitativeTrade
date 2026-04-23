@@ -169,7 +169,7 @@ class DatabaseManager:
                 logger.warning(f"No data found for {symbol} in database")
                 return pd.DataFrame()
 
-            # Convert to DataFrame
+            # 转换为DataFrame
             data = []
             for row in results:
                 data.append(
@@ -260,7 +260,7 @@ class DatabaseManager:
         session = self.Session()
 
         try:
-            # Get min date
+            # 获取最小日期
             min_date_result = (
                 session.query(MarketData.date)
                 .filter(MarketData.symbol == symbol)
@@ -268,7 +268,7 @@ class DatabaseManager:
                 .first()
             )
 
-            # Get max date
+            # 获取最大日期
             max_date_result = (
                 session.query(MarketData.date)
                 .filter(MarketData.symbol == symbol)
@@ -276,7 +276,7 @@ class DatabaseManager:
                 .first()
             )
 
-            # Get row count
+            # 获取行数
             row_count_result = (
                 session.query(MarketData)
                 .filter(MarketData.symbol == symbol)
@@ -372,7 +372,7 @@ class DatabaseManager:
                 {"name": col["name"], "type": str(col["type"])} for col in columns
             ]
 
-        # Get row counts
+        # 获取行数
         session = self.Session()
         try:
             if "market_data" in tables:

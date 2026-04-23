@@ -30,7 +30,7 @@ class DataProcessor:
 
         df_clean = df.copy()
 
-        # Ensure index is datetime
+        # 确保索引为datetime类型
         if not isinstance(df_clean.index, pd.DatetimeIndex):
             if "date" in df_clean.columns:
                 df_clean.set_index("date", inplace=True)
@@ -39,11 +39,11 @@ class DataProcessor:
             else:
                 raise ValueError("DataFrame must have a date column or index")
 
-        # Sort by date
+        # 按日期排序
         df_clean.sort_index(inplace=True)
-
-        # Handle missing values
-        # Forward fill for OHLC, zero for volume
+        
+        # 处理缺失值
+        # OHLC前向填充，成交量填零
         ohlc_columns = ["open", "high", "low", "close", "adj_close"]
         for col in ohlc_columns:
             if col in df_clean.columns:
@@ -52,10 +52,10 @@ class DataProcessor:
         if "volume" in df_clean.columns:
             df_clean["volume"] = df_clean["volume"].fillna(0)
 
-        # Remove rows with any remaining NaN in OHLC
+        # 移除OHLC中仍有NaN的行
         df_clean = df_clean.dropna(subset=ohlc_columns)
-
-        # Remove duplicate dates (keep last)
+        
+        # 移除重复日期（保留最后一条）
         df_clean = df_clean[~df_clean.index.duplicated(keep="last")]
 
         logger.info(f"Cleaned data: {len(df_clean)} rows after cleaning")
@@ -76,13 +76,13 @@ class DataProcessor:
 
         df_result = df.copy()
 
-        # Simple returns
+        # 简单收益率
         df_result["returns"] = df_result[column].pct_change()
 
-        # Log returns
+        # 对数收益率
         df_result["log_returns"] = np.log(df_result[column] / df_result[column].shift(1))
 
-        # Cumulative returns
+        # 累计收益率
         df_result["cumulative_returns"] = (1 + df_result["returns"]).cumprod() - 1
 
         return df_result
@@ -129,16 +129,16 @@ class DataProcessor:
 
         df_result = df.copy()
 
-        # Ensure returns column exists
+        # 确保收益率列存在
         if "returns" not in df_result.columns:
             df_result = self.add_returns(df_result)
 
-        # Rolling standard deviation (historical volatility)
+        # 滚动标准差（历史波动率）
         df_result[f"volatility_{window}"] = (
             df_result["returns"].rolling(window=window).std() * np.sqrt(252)
         )
 
-        # Rolling average true range (ATR)
+        # 滚动平均真实范围（ATR）
         if all(col in df_result.columns for col in ["high", "low", "close"]):
             df_result["tr"] = np.maximum(
                 df_result["high"] - df_result["low"],
@@ -165,28 +165,28 @@ class DataProcessor:
 
         df_result = df.copy()
 
-        # Ensure required columns exist
+        # 确保所需列存在
         required_cols = ["open", "high", "low", "close", "volume"]
         missing_cols = [col for col in required_cols if col not in df_result.columns]
         if missing_cols:
             logger.warning(f"Missing columns for technical indicators: {missing_cols}")
             return df_result
 
-        # Relative Strength Index (RSI)
+        # 相对强弱指标（RSI）
         delta = df_result["close"].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
         df_result["rsi"] = 100 - (100 / (1 + rs))
 
-        # Moving Average Convergence Divergence (MACD)
+        # 异同移动平均线（MACD）
         ema_12 = df_result["close"].ewm(span=12, adjust=False).mean()
         ema_26 = df_result["close"].ewm(span=26, adjust=False).mean()
         df_result["macd"] = ema_12 - ema_26
         df_result["macd_signal"] = df_result["macd"].ewm(span=9, adjust=False).mean()
         df_result["macd_hist"] = df_result["macd"] - df_result["macd_signal"]
 
-        # Bollinger Bands
+        # 布林带
         df_result["bb_middle"] = df_result["close"].rolling(window=20).mean()
         bb_std = df_result["close"].rolling(window=20).std()
         df_result["bb_upper"] = df_result["bb_middle"] + (bb_std * 2)
@@ -196,17 +196,17 @@ class DataProcessor:
             df_result["bb_upper"] - df_result["bb_lower"]
         )
 
-        # On-Balance Volume (OBV)
+        # 能量潮指标（OBV）
         df_result["obv"] = 0
         df_result.loc[df_result["close"] > df_result["close"].shift(1), "obv"] = df_result["volume"]
         df_result.loc[df_result["close"] < df_result["close"].shift(1), "obv"] = -df_result["volume"]
         df_result["obv"] = df_result["obv"].cumsum()
 
-        # Price channels
+        # 价格通道
         df_result["high_20"] = df_result["high"].rolling(window=20).max()
         df_result["low_20"] = df_result["low"].rolling(window=20).min()
 
-        # Average Directional Index (ADX) approximation
+        # 平均方向性指数（ADX）近似值
         df_result["tr"] = np.maximum(
             df_result["high"] - df_result["low"],
             np.maximum(
@@ -236,7 +236,7 @@ class DataProcessor:
             logger.warning("DataFrame index is not DatetimeIndex, cannot add time features")
             return df_result
 
-        # Basic time features
+        # 基础时间特征
         df_result["year"] = df_result.index.year
         df_result["month"] = df_result.index.month
         df_result["day"] = df_result.index.day
@@ -244,10 +244,10 @@ class DataProcessor:
         df_result["day_of_year"] = df_result.index.dayofyear
         df_result["week_of_year"] = df_result.index.isocalendar().week
 
-        # Quarter
+        # 季度
         df_result["quarter"] = df_result.index.quarter
 
-        # Is month end/start
+        # 是否月末/月初
         df_result["is_month_end"] = df_result.index.is_month_end.astype(int)
         df_result["is_month_start"] = df_result.index.is_month_start.astype(int)
         df_result["is_quarter_end"] = df_result.index.is_quarter_end.astype(int)
@@ -255,7 +255,7 @@ class DataProcessor:
         df_result["is_year_end"] = df_result.index.is_year_end.astype(int)
         df_result["is_year_start"] = df_result.index.is_year_start.astype(int)
 
-        # Time of day (for intraday data)
+        # 一天中的时间（用于日内数据）
         if df_result.index.hour.any():
             df_result["hour"] = df_result.index.hour
             df_result["minute"] = df_result.index.minute
@@ -280,26 +280,26 @@ class DataProcessor:
 
         df_result = df.copy()
 
-        # Clean data
+        # 清理数据
         df_result = self.clean_data(df_result)
 
-        # Add returns if not present
+        # 如果不存在则添加收益率
         if "returns" not in df_result.columns:
             df_result = self.add_returns(df_result)
 
-        # Add moving averages
+        # 添加移动平均线
         df_result = self.add_moving_averages(df_result)
 
-        # Add volatility
+        # 添加波动率
         df_result = self.add_volatility(df_result)
 
-        # Add technical indicators
+        # 添加技术指标
         df_result = self.add_technical_indicators(df_result)
 
-        # Add time features
+        # 添加时间特征
         df_result = self.add_time_features(df_result)
 
-        # Create target
+        # 创建目标
         if target_col == "returns":
             df_result["target"] = df_result["returns"].shift(-lookahead)
         elif target_col in df_result.columns:
@@ -308,7 +308,7 @@ class DataProcessor:
             logger.warning(f"Target column {target_col} not found, using returns")
             df_result["target"] = df_result["returns"].shift(-lookahead)
 
-        # Drop rows with NaN (from rolling calculations and target shift)
+        # 删除包含NaN的行（来自滚动计算和目标偏移）
         df_result = df_result.dropna()
 
         logger.info(f"Prepared features: {len(df_result)} rows, {len(df_result.columns)} columns")
@@ -330,7 +330,7 @@ class DataProcessor:
         if not isinstance(df.index, pd.DatetimeIndex):
             raise ValueError("DataFrame must have DatetimeIndex for resampling")
 
-        # Define aggregation rules
+        # 定义聚合规则
         ohlc_dict = {
             "open": "first",
             "high": "max",
@@ -339,12 +339,12 @@ class DataProcessor:
             "volume": "sum",
         }
 
-        # Add any additional columns
+        # 添加任何额外列
         for col in df.columns:
             if col not in ohlc_dict:
                 ohlc_dict[col] = "last"
 
-        # Resample
+        # 重采样
         df_resampled = df.resample(freq).apply(ohlc_dict)
 
         return df_resampled
@@ -365,7 +365,7 @@ class DataProcessor:
         df_result = df.copy()
 
         if columns is None:
-            # Select numeric columns
+            # 选择数值列
             numeric_cols = df_result.select_dtypes(include=[np.number]).columns.tolist()
             columns = [col for col in numeric_cols if col != "target"]
 

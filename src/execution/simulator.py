@@ -58,19 +58,19 @@ class Order:
             self.timestamp = datetime.now()
     
     def is_filled(self) -> bool:
-        """Check if order is completely filled."""
+        """检查订单是否完全成交。"""
         return self.status == OrderStatus.FILLED
     
     def is_active(self) -> bool:
-        """Check if order is active (pending or submitted)."""
+        """检查订单是否处于活跃状态（待处理或已提交）。"""
         return self.status in [OrderStatus.PENDING, OrderStatus.SUBMITTED]
     
     def remaining_quantity(self) -> float:
-        """Get remaining quantity to fill."""
+        """获取剩余待成交量。"""
         return self.quantity - self.filled_quantity
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert order to dictionary."""
+        """将订单转换为字典。"""
         return {
             "order_id": self.order_id,
             "symbol": self.symbol,
@@ -138,23 +138,23 @@ class SimulatedExecution:
         self.fill_probability = fill_probability
         self.partial_fill_enabled = partial_fill_enabled
         
-        # Random seed
+        # 随机种子
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
         
-        # Order management
+        # 订单管理
         self.orders: Dict[str, Order] = {}
         self.order_history: List[Order] = []
         self.trade_history: List[Dict[str, Any]] = []
         
-        # Position tracking
+        # 持仓跟踪
         self.positions: Dict[str, Dict[str, Any]] = {}
         
-        # Market data cache
+        # 市场数据缓存
         self.market_data: Dict[str, pd.DataFrame] = {}
         
-        # Statistics
+        # 统计数据
         self.total_commissions = 0.0
         self.total_slippage = 0.0
         self.total_trades = 0
@@ -197,7 +197,7 @@ class SimulatedExecution:
         if not self._validate_order(symbol, side, quantity, price):
             raise ValueError("Order validation failed")
         
-        # Create order
+        # 创建订单
         order = Order(
             order_id=order_id,
             symbol=symbol,
@@ -212,7 +212,7 @@ class SimulatedExecution:
             expiration=expiration,
         )
         
-        # Store order
+        # 存储订单
         self.orders[order_id] = order
         
         logger.info(
@@ -541,23 +541,23 @@ class SimulatedExecution:
         close_price: float,
     ) -> Tuple[float, float]:
         """Match order with market prices.
-        
+
         Args:
-            order: Order to match.
-            open_price: Market open price.
-            high_price: Market high price.
-            low_price: Market low price.
-            close_price: Market close price.
-            
+            order: 要匹配的订单。
+            open_price: 市场开盘价。
+            high_price: 市场最高价。
+            low_price: 市场最低价。
+            close_price: 市场收盘价。
+
         Returns:
-            Tuple of (fill_price, fill_quantity).
+            元组（成交价格，成交量）。
         """
-        # Check fill probability
+        # 检查成交概率
         if random.random() > self.fill_probability:
             return 0.0, 0.0
         
         if order.order_type == OrderType.MARKET:
-            # Market orders fill at current price
+            # 市价订单以当前价格成交
             fill_price = close_price
             fill_quantity = order.remaining_quantity()
             
@@ -623,9 +623,9 @@ class SimulatedExecution:
         else:
             return 0.0, 0.0
         
-        # Apply partial fills
+        # 应用部分成交
         if self.partial_fill_enabled and fill_quantity > 0:
-            # Random partial fill (0-100%)
+            # 随机部分成交（0-100%）
             fill_percentage = random.uniform(0.5, 1.0)
             fill_quantity = fill_quantity * fill_percentage
         
@@ -637,13 +637,13 @@ class SimulatedExecution:
         quantity: float,
     ) -> float:
         """Calculate commission for a trade.
-        
+
         Args:
-            price: Trade price.
-            quantity: Trade quantity.
-            
+            price: 交易价格。
+            quantity: 交易数量。
+
         Returns:
-            Commission amount.
+            佣金金额。
         """
         trade_value = price * quantity
         commission = trade_value * self.commission_rate
@@ -656,14 +656,14 @@ class SimulatedExecution:
         order_type: OrderType,
     ) -> float:
         """Calculate slippage for a trade.
-        
+
         Args:
-            price: Trade price.
-            quantity: Trade quantity.
-            order_type: Order type.
-            
+            price: 交易价格。
+            quantity: 交易数量。
+            order_type: 订单类型。
+
         Returns:
-            Slippage amount.
+            滑点金额。
         """
         if self.slippage_model == "proportional":
             slippage = price * self.slippage_factor
@@ -672,13 +672,13 @@ class SimulatedExecution:
             slippage = self.slippage_factor
         
         elif self.slippage_model == "random":
-            # Random slippage between 0 and 2*slippage_factor
+            # 随机滑点，范围0到2*slippage_factor
             slippage = price * random.uniform(0, 2 * self.slippage_factor)
         
         else:
             slippage = 0.0
-        
-        # Adjust for order type
+
+        # 根据订单类型调整
         if order_type == OrderType.MARKET:
             slippage *= 1.0  # Market orders have normal slippage
         elif order_type == OrderType.LIMIT:
@@ -699,17 +699,17 @@ class SimulatedExecution:
         timestamp: datetime,
     ) -> None:
         """Update portfolio after order fill.
-        
+
         Args:
-            order: Filled order.
-            price: Fill price.
-            quantity: Fill quantity.
-            commission: Commission paid.
-            timestamp: Fill timestamp.
+            order: 已成交的订单。
+            price: 成交价格。
+            quantity: 成交数量。
+            commission: 支付的佣金。
+            timestamp: 成交时间戳。
         """
         symbol = order.symbol
-        
-        # Initialize position if not exists
+
+        # 如果持仓不存在则初始化
         if symbol not in self.positions:
             self.positions[symbol] = {
                 "symbol": symbol,
@@ -724,16 +724,16 @@ class SimulatedExecution:
         position = self.positions[symbol]
         
         if order.side == "BUY":
-            # Update position for BUY
+            # 更新买入持仓
             total_cost = price * quantity + commission
-            
+
             if position["quantity"] == 0:
-                # New position
+                # 新建持仓
                 position["quantity"] = quantity
                 position["avg_price"] = price
                 position["entry_time"] = timestamp
             else:
-                # Add to existing position
+                # 添加到现有持仓
                 old_quantity = position["quantity"]
                 old_avg_price = position["avg_price"]
                 old_value = old_quantity * old_avg_price
@@ -744,43 +744,43 @@ class SimulatedExecution:
                 position["quantity"] = new_quantity
                 position["avg_price"] = new_avg_price
             
-            # Update capital
+            # 更新资金
             self.capital -= total_cost
-        
+
         else:  # SELL
-            # Update position for SELL
+            # 更新卖出持仓
             if position["quantity"] == 0:
-                # Short selling (not implemented in this simplified version)
+                # 做空（此简化版本未实现）
                 logger.warning(f"Short selling not implemented for {symbol}")
                 return
             
-            # Calculate P&L
+            # 计算盈亏
             sell_value = price * quantity - commission
             cost_basis = position["avg_price"] * quantity
             pnl = sell_value - cost_basis
             
-            # Update position
+            # 更新持仓
             position["quantity"] -= quantity
-            
-            # Update realized P&L
+
+            # 更新已实现盈亏
             position["realized_pnl"] += pnl
-            
-            # Update capital
+
+            # 更新资金
             self.capital += sell_value
-            
-            # Remove position if quantity is zero
+
+            # 如果数量为零则移除持仓
             if position["quantity"] == 0:
                 position["avg_price"] = 0
                 position["entry_time"] = None
         
-        # Update market value and unrealized P&L
+        # 更新市值和未实现盈亏
         self._update_position_value(symbol)
     
     def _update_position_value(self, symbol: str) -> None:
         """Update market value and unrealized P&L for a position.
         
         Args:
-            symbol: Trading symbol.
+            symbol: 交易代码。
         """
         if symbol not in self.positions:
             return
@@ -803,32 +803,32 @@ class SimulatedExecution:
             position["unrealized_pnl"] = 0.0
     
     def _simulate_latency(self) -> None:
-        """Simulate network and processing latency."""
+        """模拟网络和处理延迟。"""
         # In a real simulation, you might add a time delay
         # For now, just log it
         logger.debug(f"Simulated latency: {self.latency_ms}ms")
     
     def get_order_status(self, order_id: str) -> Optional[OrderStatus]:
         """Get order status.
-        
+
         Args:
-            order_id: Order ID.
-            
+            order_id: 订单ID。
+
         Returns:
-            Order status or None if not found.
+            订单状态或未找到时为None。
         """
         if order_id in self.orders:
             return self.orders[order_id].status
         return None
     
     def get_open_orders(self, symbol: Optional[str] = None) -> List[Order]:
-        """Get all open orders.
+        """获取所有未完成订单。
         
         Args:
-            symbol: Optional symbol filter.
-            
+            symbol: 可选的代码过滤器。
+
         Returns:
-            List of open orders.
+            未完成订单列表。
         """
         open_orders = []
         for order in self.orders.values():
@@ -843,15 +843,15 @@ class SimulatedExecution:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
-        """Get trade history with filters.
+        """获取带过滤条件的交易历史。
         
         Args:
-            symbol: Symbol filter.
-            start_date: Start date filter.
-            end_date: End date filter.
-            
+            symbol: 代码过滤器。
+            start_date: 开始日期过滤器。
+            end_date: 结束日期过滤器。
+
         Returns:
-            Filtered trade history.
+            过滤后的交易历史。
         """
         filtered = self.trade_history
         

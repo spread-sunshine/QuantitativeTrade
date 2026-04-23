@@ -31,7 +31,7 @@ def calculate_metrics(
     if len(returns) < 2:
         return _empty_metrics()
     
-    # Remove NaN values
+    # 移除NaN值
     returns_clean = returns.dropna()
     equity_clean = equity_curve.dropna()
     drawdown_clean = drawdown.dropna()
@@ -76,13 +76,13 @@ def calculate_metrics(
 
 
 def _get_annualization_factor(frequency: str) -> float:
-    """Get annualization factor based on data frequency.
+    """根据数据频率获取年化因子。
     
     Args:
-        frequency: Data frequency ('daily', 'weekly', 'monthly', 'hourly').
+        frequency: 数据频率（'daily'、'weekly'、'monthly'、'hourly'）。
         
     Returns:
-        Annualization factor.
+        年化因子。
     """
     factors = {
         "daily": 252,
@@ -96,7 +96,7 @@ def _get_annualization_factor(frequency: str) -> float:
 
 
 def _empty_metrics() -> Dict[str, float]:
-    """Return empty metrics dictionary."""
+    """返回空指标字典。"""
     return {
         "total_return": 0.0,
         "annualized_return": 0.0,
@@ -127,37 +127,37 @@ def _calculate_return_metrics(
     initial_capital: float,
     ann_factor: float,
 ) -> Dict[str, float]:
-    """Calculate return-related metrics.
+    """计算收益相关指标。
     
     Args:
-        returns: Clean returns series.
-        equity_curve: Clean equity curve.
-        initial_capital: Initial capital.
-        ann_factor: Annualization factor.
+        returns: 清洗后的收益序列。
+        equity_curve: 清洗后的权益曲线。
+        initial_capital: 初始资金。
+        ann_factor: 年化因子。
         
     Returns:
-        Dictionary with return metrics.
+        包含收益指标的字典。
     """
     metrics = {}
     
-    # Total return
+    # 总收益
     if len(equity_curve) > 0:
         total_return = (equity_curve.iloc[-1] / initial_capital) - 1
     else:
         total_return = 0.0
     metrics["total_return"] = total_return
     
-    # Annualized return
+    # 年化收益
     if len(returns) > 0:
         ann_return = returns.mean() * ann_factor
     else:
         ann_return = 0.0
     metrics["annualized_return"] = ann_return
     
-    # Cumulative returns
+    # 累计收益
     metrics["cumulative_return"] = total_return
     
-    # CAGR (Compound Annual Growth Rate)
+    # CAGR（复合年增长率）
     if len(equity_curve) > 1:
         n_periods = len(equity_curve)
         cagr = (equity_curve.iloc[-1] / initial_capital) ** (ann_factor / n_periods) - 1
@@ -165,7 +165,7 @@ def _calculate_return_metrics(
         cagr = 0.0
     metrics["cagr"] = cagr
     
-    # Positive/Negative returns
+    # 正/负收益
     positive_returns = returns[returns > 0]
     negative_returns = returns[returns < 0]
     
@@ -183,27 +183,27 @@ def _calculate_risk_metrics(
     drawdown: pd.Series,
     ann_factor: float,
 ) -> Dict[str, float]:
-    """Calculate risk-related metrics.
+    """计算风险相关指标。
     
     Args:
-        returns: Clean returns series.
-        equity_curve: Clean equity curve.
-        drawdown: Clean drawdown series.
-        ann_factor: Annualization factor.
+        returns: 清洗后的收益序列。
+        equity_curve: 清洗后的权益曲线。
+        drawdown: 清洗后的回撤序列。
+        ann_factor: 年化因子。
         
     Returns:
-        Dictionary with risk metrics.
+        包含风险指标的字典。
     """
     metrics = {}
     
-    # Volatility (annualized)
+    # 波动率（年化）
     if len(returns) > 1:
         volatility = returns.std() * np.sqrt(ann_factor)
     else:
         volatility = 0.0
     metrics["volatility"] = volatility
     
-    # Downside deviation (annualized)
+    # 下行偏差（年化）
     downside_returns = returns[returns < 0]
     if len(downside_returns) > 1:
         downside_deviation = downside_returns.std() * np.sqrt(ann_factor)
@@ -211,21 +211,21 @@ def _calculate_risk_metrics(
         downside_deviation = 0.0
     metrics["downside_deviation"] = downside_deviation
     
-    # Maximum drawdown
+    # 最大回撤
     if len(drawdown) > 0:
         max_drawdown = drawdown.min()
     else:
         max_drawdown = 0.0
     metrics["max_drawdown"] = max_drawdown
     
-    # Average drawdown
+    # 平均回撤
     if len(drawdown) > 0:
         avg_drawdown = drawdown[drawdown < 0].mean()
     else:
         avg_drawdown = 0.0
     metrics["avg_drawdown"] = avg_drawdown if not np.isnan(avg_drawdown) else 0.0
     
-    # Drawdown duration statistics
+    # 回撤持续时间统计
     if len(drawdown) > 0:
         underwater = drawdown < 0
         if underwater.any():
@@ -238,21 +238,21 @@ def _calculate_risk_metrics(
             metrics["max_drawdown_duration"] = 0.0
             metrics["avg_drawdown_duration"] = 0.0
     
-    # Value at Risk (95%)
+    # 风险价值（95%）
     if len(returns) > 0:
         var_95 = returns.quantile(0.05)
     else:
         var_95 = 0.0
     metrics["var_95"] = var_95
     
-    # Conditional Value at Risk (95%)
+    # 条件风险价值（95%）
     if len(returns) > 0:
         cvar_95 = returns[returns <= var_95].mean()
     else:
         cvar_95 = 0.0
     metrics["cvar_95"] = cvar_95 if not np.isnan(cvar_95) else 0.0
     
-    # Ulcer Index
+    # Ulcer指数
     if len(drawdown) > 0:
         ulcer_index = np.sqrt((drawdown ** 2).mean())
     else:
@@ -267,15 +267,15 @@ def _calculate_risk_adjusted_metrics(
     risk_free_rate: float,
     ann_factor: float,
 ) -> Dict[str, float]:
-    """Calculate risk-adjusted return metrics.
+    """计算风险调整后的收益指标。
     
     Args:
-        returns: Clean returns series.
-        risk_free_rate: Annual risk-free rate.
-        ann_factor: Annualization factor.
+        returns: 清洗后的收益序列。
+        risk_free_rate: 年化无风险利率。
+        ann_factor: 年化因子。
         
     Returns:
-        Dictionary with risk-adjusted metrics.
+        包含风险调整后收益指标的字典。
     """
     metrics = {}
     
@@ -290,7 +290,7 @@ def _calculate_risk_adjusted_metrics(
             "tail_ratio": 0.0,
         }
     
-    # Annualized metrics
+    # 年化指标
     ann_return = returns.mean() * ann_factor
     ann_vol = returns.std() * np.sqrt(ann_factor)
     
@@ -313,11 +313,11 @@ def _calculate_risk_adjusted_metrics(
         sortino = 0.0
     metrics["sortino_ratio"] = sortino
     
-    # Calmar ratio (CAGR / Max Drawdown)
-    # Note: We need max_drawdown from other function
-    # This will be filled in later
+    # 卡玛比率（CAGR / 最大回撤）
+    # 注意：需要从其他函数获取max_drawdown
+    # 稍后会填充
     
-    # Omega ratio
+    # Omega比率
     threshold = risk_free_rate / ann_factor  # Daily equivalent
     excess_returns = returns - threshold
     
@@ -330,7 +330,7 @@ def _calculate_risk_adjusted_metrics(
         omega = float('inf') if positive_excess > 0 else 0.0
     metrics["omega_ratio"] = min(omega, 100.0) if omega != float('inf') else 100.0
     
-    # Gain/Loss ratio
+    # 盈亏比
     positive_returns = returns[returns > 0]
     negative_returns = returns[returns < 0]
     
@@ -340,7 +340,7 @@ def _calculate_risk_adjusted_metrics(
         gain_loss = 0.0
     metrics["gain_loss_ratio"] = gain_loss
     
-    # Tail ratio (95th percentile / 5th percentile)
+    # 尾部比率（第95百分位 / 第5百分位）
     if len(returns) >= 10:
         tail_95 = returns.quantile(0.95)
         tail_5 = returns.quantile(0.05)
@@ -352,20 +352,20 @@ def _calculate_risk_adjusted_metrics(
         tail_ratio = 0.0
     metrics["tail_ratio"] = tail_ratio
     
-    # Treynor ratio (requires beta)
-    # Will be calculated separately if benchmark available
+    # 特雷诺比率（需要beta值）
+    # 如果有基准数据，将单独计算
     
     return metrics
 
 
 def _calculate_statistical_metrics(returns: pd.Series) -> Dict[str, Any]:
-    """Calculate statistical metrics.
+    """计算统计指标。
     
     Args:
-        returns: Clean returns series.
+        returns: 清洗后的收益序列。
         
     Returns:
-        Dictionary with statistical metrics.
+        包含统计指标的字典。
     """
     metrics = {}
     
@@ -377,15 +377,15 @@ def _calculate_statistical_metrics(returns: pd.Series) -> Dict[str, Any]:
             "jarque_bera_pvalue": 1.0,
         }
     
-    # Skewness
+    # 偏度
     skew = returns.skew()
     metrics["skewness"] = 0.0 if np.isnan(skew) else skew
     
-    # Kurtosis
+    # 峰度
     kurt = returns.kurtosis()
     metrics["kurtosis"] = 0.0 if np.isnan(kurt) else kurt
     
-    # Jarque-Bera test for normality
+    # Jarque-Bera正态性检验
     if len(returns) >= 4:
         try:
             jb_stat, jb_pvalue = stats.jarque_bera(returns)
@@ -398,7 +398,7 @@ def _calculate_statistical_metrics(returns: pd.Series) -> Dict[str, Any]:
         metrics["jarque_bera"] = 0.0
         metrics["jarque_bera_pvalue"] = 1.0
     
-    # Autocorrelation (lag 1)
+    # 自相关（滞后1期）
     if len(returns) >= 3:
         try:
             autocorr = returns.autocorr(lag=1)
@@ -408,7 +408,7 @@ def _calculate_statistical_metrics(returns: pd.Series) -> Dict[str, Any]:
     else:
         metrics["autocorrelation_lag1"] = 0.0
     
-    # Hurst exponent (rough estimate)
+    # Hurst指数（粗略估计）
     if len(returns) >= 20:
         try:
             hurst = _estimate_hurst(returns)
@@ -422,21 +422,21 @@ def _calculate_statistical_metrics(returns: pd.Series) -> Dict[str, Any]:
 
 
 def _estimate_hurst(series: pd.Series, max_lag: int = 20) -> float:
-    """Estimate Hurst exponent using R/S analysis.
+    """使用R/S分析估计Hurst指数。
     
     Args:
-        series: Time series.
-        max_lag: Maximum lag for R/S calculation.
+        series: 时间序列。
+        max_lag: R/S计算的最大滞后阶数。
         
     Returns:
-        Estimated Hurst exponent.
+        估计的Hurst指数。
     """
     lags = range(2, min(max_lag, len(series) // 2))
     tau = []
     lag_vec = []
     
     for lag in lags:
-        # Divide series into chunks
+        # 将序列分割为块
         chunks = len(series) // lag
         if chunks < 2:
             continue
@@ -447,7 +447,7 @@ def _estimate_hurst(series: pd.Series, max_lag: int = 20) -> float:
             if len(chunk) < 2:
                 continue
             
-            # Calculate R/S for chunk
+            # 计算块的R/S值
             mean_chunk = np.mean(chunk)
             deviations = chunk - mean_chunk
             z = np.cumsum(deviations)
@@ -464,7 +464,7 @@ def _estimate_hurst(series: pd.Series, max_lag: int = 20) -> float:
     if len(tau) < 2:
         return 0.5
     
-    # Fit line to log-log plot
+    # 对双对数图拟合直线
     hurst, _ = np.polyfit(lag_vec, tau, 1)
     return hurst
 
@@ -475,18 +475,18 @@ def calculate_alpha_beta(
     risk_free_rate: float = 0.02,
     ann_factor: float = 252,
 ) -> Tuple[float, float, Dict[str, float]]:
-    """Calculate alpha, beta, and related statistics.
+    """计算alpha、beta及相关统计信息。
     
     Args:
-        strategy_returns: Strategy returns series.
-        benchmark_returns: Benchmark returns series.
-        risk_free_rate: Annual risk-free rate.
-        ann_factor: Annualization factor.
+        strategy_returns: 策略收益序列。
+        benchmark_returns: 基准收益序列。
+        risk_free_rate: 年化无风险利率。
+        ann_factor: 年化因子。
         
     Returns:
-        Tuple of (alpha, beta, additional_stats).
+        元组（alpha、beta、附加统计信息）。
     """
-    # Align returns
+    # 对齐收益序列
     aligned = pd.concat([strategy_returns, benchmark_returns], axis=1).dropna()
     if len(aligned) < 2:
         return 0.0, 0.0, {}
@@ -494,45 +494,45 @@ def calculate_alpha_beta(
     strategy_aligned = aligned.iloc[:, 0]
     benchmark_aligned = aligned.iloc[:, 1]
     
-    # Calculate excess returns
+    # 计算超额收益
     rf_daily = risk_free_rate / ann_factor
     strategy_excess = strategy_aligned - rf_daily
     benchmark_excess = benchmark_aligned - rf_daily
     
-    # Linear regression
+    # 线性回归
     x = benchmark_excess.values.reshape(-1, 1)
     y = strategy_excess.values
     
-    # Add constant for intercept (alpha)
+    # 添加常数项（截距，即alpha）
     x_with_const = np.hstack([np.ones((len(x), 1)), x])
     
     try:
-        # Solve using least squares
+        # 使用最小二乘法求解
         params = np.linalg.lstsq(x_with_const, y, rcond=None)[0]
         alpha = params[0]
         beta = params[1]
         
-        # Calculate residuals
+        # 计算残差
         y_pred = x_with_const.dot(params)
         residuals = y - y_pred
         
-        # R-squared
+        # R平方
         ss_res = np.sum(residuals ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
         r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
         
-        # Tracking error
+        # 跟踪误差
         tracking_error = np.std(residuals) * np.sqrt(ann_factor)
         
-        # Information ratio
+        # 信息比率
         avg_excess_return = np.mean(strategy_excess) * ann_factor
         information_ratio = avg_excess_return / tracking_error if tracking_error > 0 else 0.0
         
-        # Treynor ratio
+        # 特雷诺比率
         treynor_ratio = (np.mean(strategy_excess) * ann_factor) / beta if beta != 0 else 0.0
         
         stats = {
-            "alpha": alpha * ann_factor,  # Annualized
+            "alpha": alpha * ann_factor,  # 年化
             "beta": beta,
             "r_squared": r_squared,
             "tracking_error": tracking_error,
@@ -549,13 +549,13 @@ def calculate_alpha_beta(
 
 
 def calculate_trade_metrics(trades: pd.DataFrame) -> Dict[str, float]:
-    """Calculate metrics based on trades.
+    """计算基于交易的指标。
     
     Args:
-        trades: DataFrame with trade information.
+        trades: 包含交易信息的DataFrame。
         
     Returns:
-        Dictionary with trade metrics.
+        包含交易指标的字典。
     """
     if trades.empty:
         return {
@@ -574,11 +574,11 @@ def calculate_trade_metrics(trades: pd.DataFrame) -> Dict[str, float]:
     
     metrics = {}
     
-    # Basic counts
+    # 基本计数
     total_trades = len(trades)
     metrics["total_trades"] = total_trades
     
-    # PNL-based metrics
+    # 基于盈亏的指标
     if 'pnl' in trades.columns:
         winning_trades = trades[trades['pnl'] > 0]
         losing_trades = trades[trades['pnl'] < 0]
@@ -590,21 +590,21 @@ def calculate_trade_metrics(trades: pd.DataFrame) -> Dict[str, float]:
         metrics["total_losing_trades"] = float(total_losing)
         metrics["win_rate"] = total_winning / total_trades if total_trades > 0 else 0.0
         
-        # Profit factor
+        # 盈利因子
         gross_profit = winning_trades['pnl'].sum()
         gross_loss = abs(losing_trades['pnl'].sum())
         metrics["profit_factor"] = gross_profit / gross_loss if gross_loss > 0 else float('inf')
         
-        # Average win/loss
+        # 平均盈亏
         metrics["avg_win"] = winning_trades['pnl'].mean() if total_winning > 0 else 0.0
         metrics["avg_loss"] = losing_trades['pnl'].mean() if total_losing > 0 else 0.0
         metrics["avg_trade"] = trades['pnl'].mean()
         
-        # Largest win/loss
+        # 最大盈/亏
         metrics["largest_win"] = winning_trades['pnl'].max() if total_winning > 0 else 0.0
         metrics["largest_loss"] = losing_trades['pnl'].min() if total_losing > 0 else 0.0
         
-        # Expectancy
+        # 期望值
         avg_win = metrics["avg_win"]
         avg_loss = metrics["avg_loss"]
         win_rate = metrics["win_rate"]
@@ -612,7 +612,7 @@ def calculate_trade_metrics(trades: pd.DataFrame) -> Dict[str, float]:
         
         metrics["expectancy"] = (win_rate * avg_win) - (loss_rate * abs(avg_loss))
     
-    # Holding period metrics
+    # 持仓期指标
     if 'entry_time' in trades.columns and 'exit_time' in trades.columns:
         try:
             holding_periods = (trades['exit_time'] - trades['entry_time']).dt.total_seconds() / (24 * 3600)
@@ -627,24 +627,24 @@ def calculate_trade_metrics(trades: pd.DataFrame) -> Dict[str, float]:
 
 
 def _validate_metrics(metrics: Dict[str, float]) -> Dict[str, float]:
-    """Validate and clean metrics.
+    """验证和清理指标。
     
     Args:
-        metrics: Raw metrics dictionary.
+        metrics: 原始指标字典。
         
     Returns:
-        Validated metrics dictionary.
+        验证后的指标字典。
     """
     validated = {}
     
     for key, value in metrics.items():
-        # Replace NaN and infinite values with 0
+        # 将NaN和无穷大值替换为0
         if np.isnan(value) or np.isinf(value):
             validated[key] = 0.0
         else:
             validated[key] = float(value)
     
-    # Ensure required metrics exist
+    # 确保必需指标存在
     required = [
         "total_return", "annualized_return", "sharpe_ratio",
         "sortino_ratio", "max_drawdown", "win_rate",
@@ -654,7 +654,7 @@ def _validate_metrics(metrics: Dict[str, float]) -> Dict[str, float]:
         if metric not in validated:
             validated[metric] = 0.0
     
-    # Calculate Calmar ratio
+    # 计算卡玛比率
     if "cagr" in validated and "max_drawdown" in validated:
         cagr = validated["cagr"]
         max_dd = abs(validated["max_drawdown"])

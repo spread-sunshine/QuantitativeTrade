@@ -26,6 +26,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/market_data.db")
 YAHOO_FETCH_ENABLED = os.getenv("YAHOO_FETCH_ENABLED", "true").lower() == "true"
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", "false").lower() == "true"
+AKSHARE_ENABLED = os.getenv("AKSHARE_ENABLED", "true").lower() == "true"
+TUSHARE_ENABLED = os.getenv("TUSHARE_ENABLED", "true").lower() == "true"
+TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
 
 # 风险管理配置
 MAX_POSITION_SIZE = float(os.getenv("MAX_POSITION_SIZE", "0.1"))
@@ -50,13 +53,13 @@ PLOT_SAVE_FORMAT = os.getenv("PLOT_SAVE_FORMAT", "png")
 USE_CACHE = os.getenv("USE_CACHE", "true").lower() == "true"
 CACHE_EXPIRY_DAYS = int(os.getenv("CACHE_EXPIRY_DAYS", "7"))
 
-# 要跟踪的股票代码列表（可扩展）
+# 要跟踪的股票代码列表（可扩展）- A股格式
 DEFAULT_SYMBOLS = [
-    "AAPL",  # 苹果
-    "MSFT",  # 微软
-    "GOOGL", # 谷歌
-    "AMZN",  # 亚马逊
-    "TSLA",  # 特斯拉
-    "SPY",   # S&P 500 ETF
-    "QQQ",   # 纳斯达克100 ETF
+    "000001",  # 平安银行
+    "600519",  # 贵州茅台
+    "600036",  # 招商银行
+    "000002",  # 万科A
+    "600900",  # 长江电力
+    "601318",  # 中国平安
+    "000858",  # 五粮液
 ]

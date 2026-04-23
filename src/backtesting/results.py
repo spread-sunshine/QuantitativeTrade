@@ -49,56 +49,56 @@ class Trade:
 class BacktestResults:
     """具有序列化能力的回测结果容器。"""
     
-    # Basic information
+    # 基本信息
     name: str
     strategy_type: str
     parameters: Dict[str, Any]
     
-    # Performance metrics
+    # 性能指标
     metrics: Dict[str, float]
     
-    # Time series data
+    # 时间序列数据
     returns: pd.Series
     equity_curve: pd.Series
     drawdown: pd.Series
     signals: pd.DataFrame
     
-    # Trade information
+    # 交易信息
     trades: pd.DataFrame
     
-    # Benchmark data (optional)
+    # 基准数据（可选）
     benchmark_returns: Optional[pd.Series] = None
     
-    # Metadata
+    # 元数据
     timestamp: datetime = field(default_factory=datetime.now)
     data_shape: Optional[tuple] = None
     runtime_seconds: Optional[float] = None
     
     def __post_init__(self):
-        """Post-initialization processing."""
-        # Ensure returns index is datetime
+        """初始化后处理。"""
+        # 确保returns索引为datetime类型
         if not isinstance(self.returns.index, pd.DatetimeIndex):
             self.returns.index = pd.to_datetime(self.returns.index)
-        
-        # Ensure equity_curve index is datetime
+
+        # 确保equity_curve索引为datetime类型
         if not isinstance(self.equity_curve.index, pd.DatetimeIndex):
             self.equity_curve.index = pd.to_datetime(self.equity_curve.index)
-        
-        # Ensure drawdown index is datetime
+
+        # 确保drawdown索引为datetime类型
         if not isinstance(self.drawdown.index, pd.DatetimeIndex):
             self.drawdown.index = pd.to_datetime(self.drawdown.index)
-        
-        # Store data shape
+
+        # 存储数据形状
         self.data_shape = (
             len(self.returns),
             len(self.returns.columns) if hasattr(self.returns, 'columns') else 1,
         )
     
     def get_summary(self) -> Dict[str, Any]:
-        """Get summary statistics.
-        
+        """获取摘要统计信息。
+
         Returns:
-            Dictionary with summary statistics.
+            包含摘要统计的字典。
         """
         summary = {
             "strategy_name": self.name,
@@ -109,7 +109,7 @@ class BacktestResults:
             "runtime_seconds": self.runtime_seconds,
         }
         
-        # Add key metrics
+        # 添加关键指标
         key_metrics = [
             "total_return", "annualized_return", "sharpe_ratio",
             "sortino_ratio", "max_drawdown", "win_rate",
@@ -123,36 +123,36 @@ class BacktestResults:
         return summary
     
     def get_trade_analysis(self) -> Dict[str, Any]:
-        """Analyze trades.
+        """分析交易数据。
         
         Returns:
-            Dictionary with trade analysis.
+            包含交易分析的字典。
         """
         if self.trades.empty:
             return {"total_trades": 0}
         
         trades_df = self.trades.copy()
         
-        # Basic trade stats
+        # 基本交易统计
         total_trades = len(trades_df)
         buy_trades = len(trades_df[trades_df['type'] == 'BUY'])
         sell_trades = len(trades_df[trades_df['type'] == 'SELL'])
         
-        # Calculate holding periods if possible
+        # 如果可能，计算持仓期
         holding_periods: list[float] = []
         if 'pnl' in trades_df.columns and 'timestamp' in trades_df.columns:
-            # Group consecutive trades
+            # 分组连续交易
             pass
-        
+
         analysis = {
             "total_trades": total_trades,
             "buy_trades": buy_trades,
             "sell_trades": sell_trades,
-            "avg_trade_duration": None,  # To be calculated if data available
+            "avg_trade_duration": None,  # 如果有数据则计算
             "trade_frequency": total_trades / len(self.returns) if len(self.returns) > 0 else 0,
         }
-        
-        # Add PNL statistics if available
+
+        # 如果可用，添加盈亏统计
         if 'pnl' in trades_df.columns:
             pnl_stats = {
                 "total_pnl": trades_df['pnl'].sum(),
@@ -164,8 +164,8 @@ class BacktestResults:
                 "pnl_kurtosis": trades_df['pnl'].kurtosis(),
             }
             analysis.update(pnl_stats)
-            
-            # Win rate
+
+            # 胜率
             winning_trades = len(trades_df[trades_df['pnl'] > 0])
             losing_trades = len(trades_df[trades_df['pnl'] < 0])
             analysis.update({
@@ -174,7 +174,7 @@ class BacktestResults:
                 "win_rate": winning_trades / total_trades if total_trades > 0 else 0,
             })
             
-            # Profit factor
+            # 盈利因子
             gross_profit = trades_df[trades_df['pnl'] > 0]['pnl'].sum()
             gross_loss = abs(trades_df[trades_df['pnl'] < 0]['pnl'].sum())
             analysis["profit_factor"] = gross_profit / gross_loss if gross_loss != 0 else float('inf')
@@ -182,20 +182,20 @@ class BacktestResults:
         return analysis
     
     def get_performance_metrics(self) -> pd.DataFrame:
-        """Get performance metrics as DataFrame.
-        
+        """获取性能指标DataFrame。
+
         Returns:
-            DataFrame with performance metrics.
+            包含性能指标的DataFrame。
         """
         metrics_df = pd.DataFrame([self.metrics])
         metrics_df.index = [self.name]
         return metrics_df
     
     def get_returns_analysis(self) -> Dict[str, Any]:
-        """Analyze returns distribution.
-        
+        """分析收益分布。
+
         Returns:
-            Dictionary with returns analysis.
+            包含收益分析的字典。
         """
         returns = self.returns
         
@@ -216,7 +216,7 @@ class BacktestResults:
             "cvar_99": returns[returns <= returns.quantile(0.01)].mean(),
         }
         
-        # Annualized metrics
+        # 年化指标
         analysis.update({
             "annualized_mean": returns.mean() * 252,
             "annualized_std": returns.std() * np.sqrt(252),
@@ -225,10 +225,10 @@ class BacktestResults:
         return analysis
     
     def get_equity_analysis(self) -> Dict[str, Any]:
-        """Analyze equity curve.
-        
+        """分析权益曲线。
+
         Returns:
-            Dictionary with equity analysis.
+            包含权益分析的字典。
         """
         equity = self.equity_curve
         
@@ -244,7 +244,7 @@ class BacktestResults:
             "std_equity": equity.std(),
         }
         
-        # Calculate underwater periods
+        # 计算水下期
         underwater = self.drawdown < 0
         if underwater.any():
             underwater_periods = underwater.astype(int).groupby(
@@ -259,13 +259,13 @@ class BacktestResults:
         return analysis
     
     def to_dict(self, include_series: bool = True) -> Dict[str, Any]:
-        """Convert results to dictionary.
-        
+        """将结果转换为字典。
+
         Args:
-            include_series: Whether to include time series data.
-            
+            include_series: 是否包含时间序列数据。
+
         Returns:
-            Dictionary representation.
+            字典表示。
         """
         data = {
             "name": self.name,
@@ -276,9 +276,9 @@ class BacktestResults:
             "data_shape": self.data_shape,
             "runtime_seconds": self.runtime_seconds,
         }
-        
+
         if include_series:
-            # Convert pandas series to dictionaries
+            # 将pandas Series转换为字典
             data.update({
                 "returns": self.returns.to_dict(),
                 "equity_curve": self.equity_curve.to_dict(),
@@ -294,27 +294,27 @@ class BacktestResults:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'BacktestResults':
-        """Create results from dictionary.
-        
+        """从字典创建回测结果。
+
         Args:
-            data: Dictionary representation.
-            
+            data: 字典表示。
+
         Returns:
-            BacktestResults instance.
+            BacktestResults实例。
         """
         data = data.copy()
-        
-        # Convert timestamp
+
+        # 转换时间戳
         if 'timestamp' in data:
             data['timestamp'] = datetime.fromisoformat(data['timestamp'])
-        
-        # Convert pandas series if present
+
+        # 如果存在，转换pandas Series
         series_fields = ['returns', 'equity_curve', 'drawdown', 'benchmark_returns']
         for field in series_fields:
             if field in data and isinstance(data[field], dict):
                 data[field] = pd.Series(data[field])
-        
-        # Convert pandas DataFrames if present
+
+        # 如果存在，转换pandas DataFrame
         df_fields = ['signals', 'trades']
         for field in df_fields:
             if field in data and isinstance(data[field], dict):
@@ -325,21 +325,21 @@ class BacktestResults:
                 else:
                     # Simple dict format
                     data[field] = pd.DataFrame(data[field])
-        
+
         return cls(**data)
     
     def save(self, filepath: str, format: str = "json") -> None:
-        """Save results to file.
-        
+        """保存结果到文件。
+
         Args:
-            filepath: Path to save file.
-            format: File format ('json', 'pickle').
+            filepath: 保存文件路径。
+            format: 文件格式（'json'、'pickle'）。
         """
         if format == "json":
-            # Convert to JSON-serializable dictionary
+            # 转换为JSON可序列化字典
             result_dict = self.to_dict(include_series=True)
-            
-            # Convert pandas objects
+
+            # 转换pandas对象
             for key, value in result_dict.items():
                 if isinstance(value, pd.Series):
                     result_dict[key] = value.to_dict()
@@ -359,20 +359,20 @@ class BacktestResults:
     
     @classmethod
     def load(cls, filepath: str, format: str = "json") -> 'BacktestResults':
-        """Load results from file.
-        
+        """从文件加载结果。
+
         Args:
-            filepath: Path to load file from.
-            format: File format ('json', 'pickle').
-            
+            filepath: 加载文件路径。
+            format: 文件格式（'json'、'pickle'）。
+
         Returns:
-            BacktestResults instance.
+            BacktestResults实例。
         """
         if format == "json":
             with open(filepath, 'r') as f:
                 data = json.load(f)
-            
-            # Convert back to pandas objects
+
+            # 转换回pandas对象
             for key, value in data.items():
                 if key in ['returns', 'equity_curve', 'drawdown', 'benchmark_returns']:
                     if isinstance(value, dict):
@@ -395,10 +395,10 @@ class BacktestResults:
             raise ValueError(f"Unsupported format: {format}")
     
     def get_report(self) -> str:
-        """Generate text report.
-        
+        """生成文本报告。
+
         Returns:
-            Formatted text report.
+            格式化的文本报告。
         """
         lines = []
         lines.append("=" * 70)
@@ -410,13 +410,13 @@ class BacktestResults:
         lines.append(f"Runtime: {self.runtime_seconds:.2f} seconds" if self.runtime_seconds else "")
         lines.append("")
         
-        # Parameters
+        # 参数
         lines.append("PARAMETERS:")
         for key, value in self.parameters.items():
             lines.append(f"  {key}: {value}")
         lines.append("")
         
-        # Key Metrics
+        # 关键指标
         lines.append("PERFORMANCE METRICS:")
         key_metrics = [
             ("Total Return", "total_return", "percentage"),
@@ -439,7 +439,7 @@ class BacktestResults:
         
         lines.append("")
         
-        # Returns Analysis
+        # 收益分析
         returns_analysis = self.get_returns_analysis()
         if returns_analysis:
             lines.append("RETURNS ANALYSIS:")
@@ -453,7 +453,7 @@ class BacktestResults:
             lines.append(f"  CVaR 95%: {returns_analysis['cvar_95']:.4%}")
             lines.append("")
         
-        # Trade Analysis
+        # 交易分析
         trade_analysis = self.get_trade_analysis()
         if trade_analysis:
             lines.append("TRADE ANALYSIS:")
@@ -469,15 +469,14 @@ class BacktestResults:
         return "\n".join(lines)
     
     def plot(self, **kwargs) -> Any:
-        """Plot results.
-        
+        """绘制结果图表。
+
         Args:
-            **kwargs: Additional arguments for plotting.
-            
+            **kwargs: 绘图的额外参数。
+
         Returns:
-            Plot object.
+            Plot对象。
         """
-        # This is a placeholder - actual plotting would be implemented
-        # in the visualization module
+        # 实际绘图将在可视化模块中实现
         from ..visualization.charts import create_performance_dashboard
         return create_performance_dashboard(self.results, **kwargs)

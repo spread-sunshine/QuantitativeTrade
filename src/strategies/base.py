@@ -330,7 +330,7 @@ class BaseStrategy(ABC):
         """Get current strategy parameters.
 
         Returns:
-            Dictionary containing all configurable strategy parameters.
+            包含所有可配置策略参数的字典。
         """
         return {
             "name": self.name,
@@ -355,10 +355,10 @@ class BaseStrategy(ABC):
                 logger.warning(f"Parameter {key} not found in strategy")
 
     def reset(self) -> None:
-        """Reset strategy state to initial conditions.
+        """将策略状态重置为初始条件。
 
-        This method clears all accumulated data and resets the strategy
-        to its initial state, allowing for a fresh backtest or simulation.
+        此方法清除所有累积数据并将策略重置到其初始状态，
+        允许进行全新的回测或模拟。
         """
         self.position = 0
         self.capital = self.initial_capital

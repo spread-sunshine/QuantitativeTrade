@@ -35,23 +35,24 @@ def load_sample_data():
     """加载示例市场数据用于演示。"""
     logger.info("Loading sample market data...")
     
-    # 如果需要，创建示例数据
-    dates = pd.date_range(start='2020-01-01', end='2023-12-31', freq='B')
+    # 生成交易日日期范围
+    dates = pd.date_range(start='2020-01-01', end='2025-12-31', freq='B')
     n = len(dates)
     
     # 生成带有趋势和噪声的合成价格数据
-    np.random.seed(42)
-    trend = np.linspace(100, 200, n)
-    noise = np.random.normal(0, 5, n)
-    prices = trend + noise + 10 * np.sin(np.linspace(0, 10 * np.pi, n))
+    np.random.seed(42) # 固定随机种子，确保可重复
+    trend = np.linspace(100, 200, n) # 长期上涨趋势（从100涨到200）
+    noise = np.random.normal(0, 5, n) # 日间波动，模拟市场不确定性
+    # 模拟周期性行情（如季节性）
+    prices = trend + noise + 10 * np.sin(np.linspace(0, 10 * np.pi, n)) # 最终价格
     
     # 创建DataFrame
     data = pd.DataFrame({
-        'open': prices * 0.99,
-        'high': prices * 1.02,
-        'low': prices * 0.98,
-        'close': prices,
-        'volume': np.random.lognormal(10, 1, n)
+        'open': prices * 0.99,  # 开盘价 = 基础价 × 0.99
+        'high': prices * 1.02,  # 最高价 = 基础价 × 1.02
+        'low': prices * 0.98,   # 最低价 = 基础价 × 0.98
+        'close': prices,        # 收盘价 = 基础价
+        'volume': np.random.lognormal(10, 1, n) # 成交量：对数正态分布
     }, index=dates)
     
     logger.info(f"Created sample data with {len(data)} rows")

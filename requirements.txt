@@ -9,6 +9,8 @@ scipy>=1.10.0
 # Data fetching
 yfinance>=0.2.0  # Yahoo Finance API
 requests>=2.31.0
+akshare>=1.12.0  # 东方财富数据
+tushare>=1.4.0   # Tushare数据
 
 # Database
 sqlalchemy>=2.0.0

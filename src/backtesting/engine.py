@@ -55,10 +55,10 @@ class BacktestEngine:
         self.benchmark = benchmark
         self.risk_free_rate = risk_free_rate
         
-        # Validate data
+        # 验证数据
         self._validate_data()
         
-        # Results storage
+        # 结果存储
         self.results: Dict[str, BacktestResults] = {}
         self.comparison_results: Optional[pd.DataFrame] = None
         
@@ -69,7 +69,7 @@ class BacktestEngine:
         )
     
     def _validate_data(self) -> None:
-        """Validate input data."""
+        """验证输入数据。"""
         if self.data.empty:
             raise ValueError("Data cannot be empty")
         
@@ -78,12 +78,12 @@ class BacktestEngine:
             if col not in self.data.columns:
                 raise ValueError(f"Data must contain '{col}' column")
         
-        # Check for NaN values
+        # 检查NaN值
         if self.data['close'].isna().any():
             warnings.warn("Data contains NaN values in 'close' column, filling forward")
             self.data['close'] = self.data['close'].ffill()
         
-        # Ensure index is datetime
+        # 确保索引为datetime类型
         if not isinstance(self.data.index, pd.DatetimeIndex):
             try:
                 self.data.index = pd.to_datetime(self.data.index)
@@ -110,25 +110,25 @@ class BacktestEngine:
         if strategy_params:
             strategy.set_parameters(**strategy_params)
         
-        # Set backtest parameters
+        # 设置回测参数
         strategy.initial_capital = self.initial_capital
         strategy.commission = self.commission
         strategy.slippage = self.slippage
         
-        # Use provided name or strategy name
+        # 使用提供的名称或策略名称
         backtest_name = name or strategy.name
         
         logger.info(f"Running backtest for strategy: {backtest_name}")
         
-        # Run strategy's internal backtest
+        # 运行策略内部回测
         strategy_results = strategy.run_backtest(self.data)
         
-        # Calculate additional metrics
+        # 计算额外指标
         returns = strategy_results["returns"]
         equity_curve = strategy_results["equity_curve"]
         drawdown = strategy_results["drawdown"]
         
-        # Calculate comprehensive metrics
+        # 计算综合指标
         metrics = calculate_metrics(
             returns=returns,
             equity_curve=equity_curve,
@@ -137,7 +137,7 @@ class BacktestEngine:
             risk_free_rate=self.risk_free_rate,
         )
         
-        # Create BacktestResults object
+        # 创建BacktestResults对象
         results = BacktestResults(
             name=backtest_name,
             strategy_type=strategy.__class__.__name__,
@@ -151,7 +151,7 @@ class BacktestEngine:
             benchmark_returns=self._get_benchmark_returns() if self.benchmark else None,
         )
         
-        # Store results
+        # 存储结果
         self.results[backtest_name] = results
         
         logger.info(f"Backtest completed for {backtest_name}")
@@ -168,16 +168,16 @@ class BacktestEngine:
         parallel: bool = False,
         max_workers: Optional[int] = None,
     ) -> Dict[str, BacktestResults]:
-        """Run backtest for multiple strategies.
+        """运行多个策略的回测。
         
         Args:
-            strategies: List of strategy instances.
-            names: Optional list of names for each backtest.
-            parallel: Whether to run strategies in parallel.
-            max_workers: Maximum number of parallel workers.
+            strategies: 策略实例列表。
+            names: 每个回测的可选名称列表。
+            parallel: 是否并行运行策略。
+            max_workers: 最大并行工作线程数。
             
         Returns:
-            Dictionary mapping strategy names to BacktestResults.
+            映射策略名称到BacktestResults的字典。
         """
         if names and len(names) != len(strategies):
             raise ValueError("names must have same length as strategies")
@@ -188,7 +188,7 @@ class BacktestEngine:
         results = {}
         
         if parallel:
-            # Run strategies in parallel
+            # 并行运行策略
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 future_to_name = {
                     executor.submit(
@@ -299,7 +299,7 @@ class BacktestEngine:
                 slippage=self.slippage,
             )
             
-            # Run backtest on test window
+            # 在测试窗口上运行回测
             window_name = f"{name}_window_{i}"
             window_results = window_engine.run_strategy(
                 window_strategy,
@@ -308,10 +308,10 @@ class BacktestEngine:
             
             results[window_name] = window_results
         
-        # Store walk-forward results
+        # 存储向前滚动分析结果
         self.results.update(results)
         
-        # Calculate walk-forward statistics
+        # 计算向前滚动统计信息
         self._calculate_walk_forward_stats(results)
         
         return results
@@ -325,22 +325,22 @@ class BacktestEngine:
         maximize: bool = True,
         n_jobs: int = -1,
     ) -> Dict[str, Any]:
-        """Run parameter optimization using grid search.
+        """使用网格搜索运行参数优化。
         
         Args:
-            strategy_class: Strategy class (not instance).
-            param_grid: Dictionary mapping parameter names to list of values.
-            name: Name for optimization run.
-            metric: Performance metric to optimize.
-            maximize: Whether to maximize the metric (True) or minimize (False).
-            n_jobs: Number of parallel jobs (-1 for all cores).
+            strategy_class: 策略类（非实例）。
+            param_grid: 映射参数名到值列表的字典。
+            name: 优化运行的名称。
+            metric: 要优化的性能指标。
+            maximize: 是否最大化指标（True）或最小化（False）。
+            n_jobs: 并行任务数（-1表示使用所有核心）。
             
         Returns:
-            Dictionary with optimization results.
+            包含优化结果的字典。
         """
         from itertools import product
         
-        # Generate all parameter combinations
+        # 生成所有参数组合
         param_names = list(param_grid.keys())
         param_values = list(product(*param_grid.values()))
         
@@ -354,13 +354,13 @@ class BacktestEngine:
         best_params = None
         best_result = None
         
-        # Run optimization
+        # 运行优化
         for values in tqdm(param_values, desc="Parameter optimization"):
-            # Create parameter dictionary
+            # 创建参数字典
             params = dict(zip(param_names, values))
             
             try:
-                # Create strategy with current parameters
+                # 使用当前参数创建策略
                 strategy = strategy_class(
                     name=f"{name}_{len(results)}",
                     initial_capital=self.initial_capital,
@@ -369,19 +369,19 @@ class BacktestEngine:
                     **params,
                 )
                 
-                # Run backtest
+                # 运行回测
                 result = self.run_strategy(strategy)
                 
-                # Get metric value
+                # 获取指标值
                 score = result.metrics.get(metric, 0)
                 
-                # Update best
+                # 更新最佳结果
                 if (maximize and score > best_score) or (not maximize and score < best_score):
                     best_score = score
                     best_params = params
                     best_result = result
                 
-                # Store result
+                # 存储结果
                 results.append({
                     "params": params,
                     "score": score,
@@ -392,7 +392,7 @@ class BacktestEngine:
                 logger.warning(f"Failed to evaluate parameters {params}: {e}")
                 continue
         
-        # Sort results by score
+        # 按分数排序结果
         results.sort(key=lambda x: float(x["score"]), reverse=maximize)
         
         optimization_results = {
@@ -405,7 +405,7 @@ class BacktestEngine:
             "best_params": best_params,
             "best_result": best_result,
             "all_results": results,
-            "top_results": results[:10],  # Top 10 results
+            "top_results": results[:10],  # 前10个结果
         }
         
         logger.info(f"Optimization completed. Best {metric}: {best_score:.4f}")
@@ -420,35 +420,35 @@ class BacktestEngine:
         name: str = "MonteCarlo",
         random_seed: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Run Monte Carlo simulation for strategy robustness.
+        """运行蒙特卡洛模拟测试策略鲁棒性。
         
         Args:
-            strategy: Strategy instance.
-            n_simulations: Number of Monte Carlo simulations.
-            name: Name for simulation run.
-            random_seed: Random seed for reproducibility.
+            strategy: 策略实例。
+            n_simulations: 蒙特卡洛模拟次数。
+            name: 模拟运行名称。
+            random_seed: 随机种子，用于可重复性。
             
         Returns:
-            Dictionary with Monte Carlo simulation results.
+            包含蒙特卡洛模拟结果的字典。
         """
         if random_seed is not None:
             np.random.seed(random_seed)
         
         logger.info(f"Starting Monte Carlo simulation with {n_simulations} iterations")
         
-        # Store original returns
+        # 存储原始收益
         original_results = self.run_strategy(strategy, f"{name}_original")
         original_returns = original_results.returns
         
         if len(original_returns) < 2:
             raise ValueError("Need at least 2 returns for Monte Carlo simulation")
         
-        # Run Monte Carlo simulations
+        # 运行蒙特卡洛模拟
         simulated_returns = []
         simulated_metrics = []
         
         for i in tqdm(range(n_simulations), desc="Monte Carlo simulation"):
-            # Bootstrap returns (random sampling with replacement)
+            # Bootstrap收益（有放回随机抽样）
             bootstrap_idx = np.random.choice(
                 len(original_returns),
                 size=len(original_returns),
@@ -456,7 +456,7 @@ class BacktestEngine:
             )
             bootstrap_returns = original_returns.iloc[bootstrap_idx]
             
-            # Calculate metrics for bootstrap sample
+            # 计算bootstrap样本的指标
             equity_curve = (1 + bootstrap_returns).cumprod() * self.initial_capital
             drawdown = (equity_curve - equity_curve.expanding().max()) / equity_curve.expanding().max()
             
@@ -471,7 +471,7 @@ class BacktestEngine:
             simulated_returns.append(bootstrap_returns)
             simulated_metrics.append(metrics)
         
-        # Calculate statistics
+        # 计算统计信息
         metrics_df = pd.DataFrame(simulated_metrics)
         
         monte_carlo_results = {
@@ -501,14 +501,14 @@ class BacktestEngine:
         signals: pd.DataFrame,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """Extract trade information from signals.
+        """从信号中提取交易信息。
         
         Args:
-            signals: DataFrame with signals.
-            data: Original market data.
+            signals: 包含信号的DataFrame。
+            data: 原始市场数据。
             
         Returns:
-            DataFrame with trade details.
+            包含交易详情的DataFrame。
         """
         if 'signal' not in signals.columns:
             return pd.DataFrame()
@@ -524,7 +524,7 @@ class BacktestEngine:
             signal = signals.loc[idx, 'signal']
             prev_signal = signals.loc[signals.index[signals.index < idx][-1], 'signal'] if any(signals.index < idx) else 0
             
-            # Determine trade type
+            # 判断交易类型
             if signal > prev_signal:
                 trade_type = "BUY"
             elif signal < prev_signal:
@@ -544,22 +544,21 @@ class BacktestEngine:
         return pd.DataFrame(trades)
     
     def _get_benchmark_returns(self) -> Optional[pd.Series]:
-        """Get benchmark returns if benchmark is specified.
+        """如果指定了基准则获取基准收益。
         
         Returns:
-            Benchmark returns series or None.
+            基准收益序列或None。
         """
-        # This is a placeholder - in a real implementation, you would
-        # fetch benchmark data from a data source
+        # 基准数据应在数据中提供或单独获取
         if not self.benchmark:
             return None
         
-        # For now, return None - benchmark data should be provided
-        # in the data or fetched separately
+        # 暂时返回None - 基准数据应在数据中提供
+        # 或单独获取
         return None
     
     def _generate_comparison_table(self) -> None:
-        """Generate comparison table for all stored results."""
+        """为所有存储的结果生成比较表。"""
         if not self.results:
             self.comparison_results = pd.DataFrame()
             return
@@ -579,15 +578,15 @@ class BacktestEngine:
         self,
         results: Dict[str, BacktestResults],
     ) -> None:
-        """Calculate statistics for walk-forward analysis.
+        """计算向前滚动分析的统计数据。
         
         Args:
-            results: Dictionary of walk-forward results.
+            results: 向前滚动分析结果的字典。
         """
         if not results:
             return
         
-        # Calculate average metrics across windows
+        # 计算跨窗口的平均指标
         metrics_list = [r.metrics for r in results.values()]
         metrics_df = pd.DataFrame(metrics_list)
         
@@ -599,19 +598,19 @@ class BacktestEngine:
             "median": metrics_df.median().to_dict(),
         }
         
-        # Store stats
+        # 存储统计信息
         self.walk_forward_stats = walk_forward_stats
         
         logger.info("Walk-forward statistics calculated")
     
     def get_results(self, name: Optional[str] = None) -> Union[BacktestResults, Dict[str, BacktestResults]]:
-        """Get backtest results.
+        """获取回测结果。
         
         Args:
-            name: Specific result name, or None for all results.
+            name: 特定结果名称，或None表示所有结果。
             
         Returns:
-            BacktestResults object or dictionary of all results.
+            BacktestResults对象或所有结果的字典。
         """
         if name:
             if name not in self.results:
@@ -621,10 +620,10 @@ class BacktestEngine:
             return self.results.copy()
     
     def get_comparison_table(self) -> pd.DataFrame:
-        """Get comparison table of all results.
+        """获取所有结果的比较表格。
         
         Returns:
-            DataFrame with strategy comparison.
+            包含策略比较的DataFrame。
         """
         if self.comparison_results is None:
             self._generate_comparison_table()
@@ -632,11 +631,11 @@ class BacktestEngine:
         return self.comparison_results.copy()
     
     def save_results(self, filepath: str, format: str = "pickle") -> None:
-        """Save backtest results to file.
+        """保存回测结果到文件。
         
         Args:
-            filepath: Path to save file.
-            format: File format ('pickle', 'csv', 'json').
+            filepath: 保存文件路径。
+            format: 文件格式（'pickle'、'csv'、'json'）。
         """
         import pickle
         
@@ -644,7 +643,7 @@ class BacktestEngine:
             with open(filepath, 'wb') as f:
                 pickle.dump(self.results, f)
         elif format == "json":
-            # Convert results to JSON-serializable format
+            # 将结果转换为JSON可序列化格式
             json_results = {}
             for name, result in self.results.items():
                 json_results[name] = result.to_dict()
@@ -653,7 +652,7 @@ class BacktestEngine:
             with open(filepath, 'w') as f:
                 json.dump(json_results, f, default=str)
         elif format == "csv":
-            # Save comparison table as CSV
+            # 保存比较表为CSV
             if self.comparison_results is not None:
                 self.comparison_results.to_csv(filepath)
             else:
@@ -664,11 +663,11 @@ class BacktestEngine:
         logger.info(f"Results saved to {filepath} (format: {format})")
     
     def load_results(self, filepath: str, format: str = "pickle") -> None:
-        """Load backtest results from file.
+        """从文件加载回测结果。
         
         Args:
-            filepath: Path to load file from.
-            format: File format ('pickle', 'json').
+            filepath: 加载文件的路径。
+            format: 文件格式（'pickle'、'json'）。
         """
         import pickle
         
@@ -680,14 +679,14 @@ class BacktestEngine:
             with open(filepath, 'r') as f:
                 json_results = json.load(f)
             
-            # Convert back to BacktestResults objects
+            # 转换回BacktestResults对象
             self.results = {}
             for name, result_dict in json_results.items():
                 self.results[name] = BacktestResults.from_dict(result_dict)
         else:
             raise ValueError(f"Unsupported format: {format}")
         
-        # Regenerate comparison table
+        # 重新生成比较表
         self._generate_comparison_table()
         
         logger.info(f"Results loaded from {filepath} (format: {format})")
